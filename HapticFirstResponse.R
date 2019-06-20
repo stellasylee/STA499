@@ -8,12 +8,11 @@ files <- list.files("H:\\V2VMAT\\MatFiles")
 disp <- readxl::read_excel("H:\\disposition.xls")
 rand <- readxl::read_excel("H:\\MainTestMatrix.xlsx")
 
+
 ## Filter 40Hz Intetensity Level Participants
 # Get participant number of 40Hz
-group40 <- as.vector(rand[which(rand$`AlertLevel` == 2),4])
+group40 <- rand[which(rand$`AlertLevel` == 2),]$'Participant#' 
 
 ## Get file names corresponding to participant number
-
-# file40
-
-## For each file (or participant), detect first response
+file40 <- filter(disp, ((substr(disp$'DaqPath', 2, 5) %in% group40) && 
+                          (substr(disp$'DaqPath', -2, -1) == "EV")))
