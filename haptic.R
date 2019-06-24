@@ -25,3 +25,13 @@ aud.mod1 = lm(Collision_TTC ~ sites, data = auditory)
 summary(aud.mod1)
 anova(aud.mod1)
 ### Analysis of Variance Table p-value = 0.06384
+
+# Driver Performance----
+## throttle release reation time
+## maximum deceleration
+aud.maxDeceleration = lm(MaxDeceleration ~ sites, data = auditory)
+summary(aud.maxDeceleration)
+anova(aud.maxDeceleration)
+### Analysis of Variance Table: 
+### F-value = 0.9634 p-value = 0.4109 
+
