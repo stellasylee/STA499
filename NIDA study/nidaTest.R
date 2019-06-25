@@ -36,3 +36,24 @@ menuF <- m1$elemDataI[[menuScore]][,1]
 mF <- m2$elemDataI[[which(rownames(m2$elemDataI) == 'AUX1.MenuScore')]][,1]
 table(mF)
 plot(mF)
+
+# output variable
+laneDevi <- which(rownames(m1$elemDataI) == 'SCC.Lane.Deviation')
+table(m1$elemDataI[[laneDevi]][,1])
+
+speed <- m1$elemDataI[[which(rownames(m1$elemDataI) == 'VDS.Veh.Speed')]][,1]
+
+library(changepoint)
+#library(changepoint.np)
+set.seed(1)
+speed.man = cpt.var (speed, method = 'PELT', penalty = 'Manual', pen.value = '2*log(n)')
+cpts(speed.man)
+plot(speed.man, cpt.width = 3)
+
+speed.man = cpt.meanvar (speed[35064:35395], method = 'AMOC', penalty = 'Manual', pen.value = '2*log(n)')
+cpts(speed.man)
+plot(speed.man, cpt.width = 3)
+
+speed.man = cpt.var (speed[35064:35395], method = 'AMOC', penalty = 'Manual', pen.value = '2*log(n)')
+cpts(speed.man)
+plot(speed.man, cpt.width = 3)
