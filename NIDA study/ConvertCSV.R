@@ -1,49 +1,49 @@
-library ("readxl")
 library(R.matlab) # Reads matlab files
 library(stringr) # String manipulation
 library(tidyverse)
-library(dplyr)
+library ("readxl")
+library ("dplyr")
 
-# Upload Data ----
+# Upload files ----
+files <- list.files("H:\\NIDA\\Reduced") # list of name of .mat files
+disp <- readxl::read_excel("H:\\NIDA\\disposition.xls")
+# filter ignore/discard data
+disp <- filter (disp, is.na(Ignore)) %>% filter(., is.na(Discard))
+fileNames <- str_replace(disp$DaqName, ".daq", ".mat")
 
-haptic <- read_excel("/Users/seoyeon/Documents/2019MAP/haptic/output_v27.xls")
-## V2V Safety Systems Forward Collision Warning event
-FCW <- read_excel("/Users/seoyeon/Documents/2019MAP/haptic/FCWCompletes_AllSites_EditThis.xlsx")
-## V2V Safety Systems Left Turn and Intersection Movement Assist events --> auditory only IMA events "IM"
-IMLT <- read_excel("/Users/seoyeon/Documents/2019MAP/haptic/IMLTCombinedData.xlsx")
-
-# IMA event
-# speed limit auditory 45mph vs haptic 35mph
-# 4 sites in auditory  haptic is only UofIowa
-
-tempList <- m1$elemDataI
-length(tempList)
-row <- tempList[[1]]
-leng <- length(tempList[[1]])
-for (i in 1:leng){
-  
+# Convert every analyze/reduced files into csv format including participant id and visit number
+for (i in 1:length(fileNames)){
+  convertToCSV(fileNames[i], as.numeric(substr(disp$DaqPath[i],1,3)),disp$Visit[i])
 }
-files <- list.files("/Users/seoyeon/Documents/2019MAP/Reduced")
-temp <- readMat(paste0("/Users/seoyeon/Documents/2019MAP/Reduced/",files[1]))
-data <- temp$elemData
-leng <- length(data[[1]])
-tempdf <- data.frame("ID" = rep(7, leng), "Visit" = rep(1, leng))
-r <- rownames(data)
-lane <- which(rownames(data) == 'SCC.Lane.Deviation')
-tlane <- data[lane]
-for (var in 1:length(data)){
-  varName = paste0(r[var])
-  #cbind(tempdf, varName = data[var])
-  tempdf[varName] = data[var]
-}
-convertToCsv <- function (data){
-  # find participantID, visit number, Condition
-  
+
+# converToCSV----
+## input----
+## fileName: name of the file needed to covert to csv
+## id: participant id from disposition file
+## visit: visit number from disposition file
+## output----
+## save csv file version of this .mat file in assigned directory
+convertToCSV <- function (fileName, id, visit){
+  path <- paste0("H:\\NIDA\\Reduced\\",fileName)
+  temp <- readMat(path)
+  data <- temp$elemData
   # Create dataframe including participantID, visit
   rowN <- length(data[[1]]) # how many rows this data contain
-  
+  leng <- length(data[[1]])
+  tempdf <- data.frame("DaqName" = rep(fileName, rowN),"ID" = rep(id, rowN), "Visit" = rep(visit, rowN))
+  r <- rownames(data)
   # Add variables from elemData
-  for (var in 1:length(data)){ # for each variables in the elemData
-    
+  for (var in 1:length(data)){
+    varName = paste0(r[var])
+    if (ncol(data[[var]]) == 1){
+      tempdf[varName] = data[[var]]
+    }else{
+      for (i in 1:ncol(data[[var]])){
+        newColName = paste0(varName,".",i)
+        tempdf[newColName] = data[[var]][,i]
+      }
+    }
   }
+  # Convert dataframe to csv file
+  write.csv(tempdf, file = paste0("H:\\NIDA\\ReducedCSV\\",substr(fileName, 1, nchar(fileName)-4), ".csv"))
 }
