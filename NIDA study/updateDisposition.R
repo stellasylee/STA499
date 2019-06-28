@@ -1,4 +1,4 @@
-library(stringr) # String manipulation
+library(stringr)
 library(tidyverse)
 library ("readxl")
 library ("dplyr")
@@ -19,5 +19,11 @@ for (i in 1:length(fileNames)){
 }
 
 disp$DaqName <- str_replace(disp$DaqName, ".daq", ".csv")
-filteredDisp <- filter (disp, !(DaqName %in% noevents))
-# drop red case
+disp <- filter (disp, !(DaqName %in% noevents))
+# drop when restart also has 3 events
+disp <- disp[!(disp$DaqName=="20121205113805.csv"),]
+ID <- as.numeric(substr(disp$DaqPath,1,3))
+newDisp <- data.frame(ID, disp[,5:7], disp[,9:16], disp[,18:19]) 
+
+# Convert dataframe to csv file
+write.csv(newDisp, file = "H:\\NIDA\\dispositionUpdate.csv", row.names=FALSE)
