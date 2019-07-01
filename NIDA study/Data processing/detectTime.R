@@ -74,16 +74,27 @@ for (i in 1:length(fileNames)){
   print (paste0("participantID: ",disp$ID[i], " ", checkTrend2(fileNames[i])))
 }
 
-# Get matrix for every simulation
+# Create dataframe for analysis
+analysisMatrix <- data.frame(matrix(ncol = 7, nrow = 0))
+colnames(analysisMatrix) <- c("ID", "DaqName", "DosingLevel", "Experiment", "SD.Lane.Deviation", "Avg.Speed", "SD.Speed")
 for (i in 1:length(fileNames)){
-  # x-coordinates ----
-  
-  # y-coordinates ----
+  file <- read.csv(paste0("H:\\NIDA\\ReducedCSV\\", fileNames[i]))
   # detect times for secondary task ----
-  times <- detectTime(fileNames[i])
+  times <- detectTime(file)
   start <- times[1]
   end <- times[2]
   engage <- start + detectEngagement(file, start, end)
   
-  # get output variables
+  # get output variables for experiment group
+  exp <- 1
+  sdLane <- 
+  avgSpeed <- sth
+  sdSpeed <- sd(file$VDS.Veh.Speed[engage:end])
+  analysisMatrix <- rbind(analysisMatrix, c(disp$ID[i], paste0(fileNames[i]), paste0(disp$DosingLevel[i]),
+                                            exp, sdLane, avgSpeed, sdSpeed))
+  # get output variables for control group
+  exp <- 0
+  sdSpeed <- sd(file$VDS.Veh.Speed[start-(end-engage):start])
+  analysisMatrix <- rbind(analysisMatrix, c(disp$ID[i], paste0(fileNames[i]), paste0(disp$DosingLevel[i]),
+                                    exp, sdLane, avgSpeed, sdSpeed))
 }
