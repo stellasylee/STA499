@@ -71,8 +71,30 @@ checkTrend <- function (filename) {
 
 # Checks if there is any simulation data with invalid engagement point
 for (i in 1:length(fileNames)){
-  print (paste0("participantID: ",disp$ID[i], " ", checkTrend2(fileNames[i])))
+  print (paste0("participantID: ",disp$ID[i], " ", checkTrend(fileNames[i])))
 }
+
+# Save secondary task time detection data to csv for future analysis
+eventTimes <- data.frame(matrix(ncol = 7, nrow = 0))
+for (i in 1:length(fileNames)){
+  file <- read.csv(paste0("H:\\NIDA\\ReducedCSV\\", fileNames[i]))
+  times <- detectTime (file)
+  start <- times[1]
+  end <- times[2]
+  engage <- detectEngagement(file, start, end)
+  eventTimes <- rbind.data.frame(eventTimes, 
+                                 c(disp$ID[i], as.character(fileNames[i]), as.character(disp$DosingLevel[i]),
+                                   start, (start + engage), end, (end - start)),
+                                 stringsAsFactors = FALSE)
+}
+colnames(eventTimes) <- c("ID", "DaqName", "DosingLevel", "start", "engagement", "end", "total")
+eventTimes$ID <- as.numeric(eventTimes$ID)
+eventTimes$start <- as.numeric(eventTimes$start)
+eventTimes$engagement <- as.numeric(eventTimes$engagement)
+eventTimes$end <- as.numeric(eventTimes$end)
+eventTimes$total <- as.numeric(eventTimes$total)
+eventTimes <- eventTimes[order(eventTimes$ID, eventTimes$DosingLevel),]
+write.csv(eventTimes, file = "H:\\NIDA\\eventTimes.csv", row.names=FALSE)
 
 # Create dataframe for analysis
 analysisMatrix <- data.frame(matrix(ncol = 7, nrow = 0))
