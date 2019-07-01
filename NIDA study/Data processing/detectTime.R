@@ -73,3 +73,17 @@ checkTrend <- function (filename) {
 for (i in 1:length(fileNames)){
   print (paste0("participantID: ",disp$ID[i], " ", checkTrend2(fileNames[i])))
 }
+
+# Get matrix for every simulation
+for (i in 1:length(fileNames)){
+  # x-coordinates ----
+  
+  # y-coordinates ----
+  # detect times for secondary task ----
+  times <- detectTime(fileNames[i])
+  start <- times[1]
+  end <- times[2]
+  engage <- start + detectEngagement(file, start, end)
+  
+  # get output variables
+}
