@@ -33,6 +33,7 @@ detectTime <- function (file){
   }
   return (c(start, end))
 }
+times<- detectTime(file)
 
 # return
 # engage: predicted engagement point during the task
@@ -71,7 +72,7 @@ checkTrend <- function (filename) {
 
 # Checks if there is any simulation data with invalid engagement point
 for (i in 1:length(fileNames)){
-  print (paste0("participantID: ",disp$ID[i], " ", checkTrend(fileNames[i])))
+  print (paste0("participantID: ",disp$ID[i], " ", checkTrend2(fileNames[i])))
 }
 
 # Save secondary task time detection data to csv for future analysis
@@ -96,10 +97,9 @@ eventTimes$total <- as.numeric(eventTimes$total)
 eventTimes <- eventTimes[order(eventTimes$ID, eventTimes$DosingLevel),]
 write.csv(eventTimes, file = "H:\\NIDA\\eventTimes.csv", row.names=FALSE)
 
+# Create dataframe for analysis
 analysisMatrix <- data.frame(matrix(ncol = 7, nrow = 0))
-colnames(analysisMatrix) <- c("ID", "DaqName", "DosingLevel", "Experiment", "SD.Lane.Deviation", "Avg.Speed", "SD.Speed")
-#for (i in 1:length(fileNames)){
-for (i in 1:1){
+for (i in 1:length(fileNames)){
   file <- read.csv(paste0("H:\\NIDA\\ReducedCSV\\", fileNames[i]))
   # detect times for secondary task ----
   times <- detectTime(file)
@@ -118,11 +118,19 @@ for (i in 1:1){
                           stringsAsFactors = FALSE)
   # get output variables for control group
   exp <- 0
-  sdLane <- sd(file$SCC.Lane.Deviation.2[start-(end-engage):start])
-  avgSpeed <- mean(file$VDS.Veh.Speed[start-(end-engage):start])
-  sdSpeed <- sd(file$VDS.Veh.Speed[start-(end-engage):start])
+  sdLane <- sd(file$SCC.Lane.Deviation.2[(start-(end-engage)):start])
+  avgSpeed <- mean(file$VDS.Veh.Speed[(start-(end-engage)):start])
+  sdSpeed <- sd(file$VDS.Veh.Speed[(start-(end-engage)):start])
   analysisMatrix <- rbind(analysisMatrix, 
                           c(disp$ID[i], paste0(fileNames[i]), paste0(disp$DosingLevel[i]),
                             exp, sdLane, avgSpeed, sdSpeed),
                           stringsAsFactors = FALSE)
 }
+colnames(analysisMatrix) <- c("ID", "DaqName", "DosingLevel", "Experiment",
+                              "SD.Lane.Deviation", "Avg.Speed", "SD.Speed")
+analysisMatrix$ID <- as.numeric(analysisMatrix$ID)
+analysisMatrix$Experiment <- as.numeric(analysisMatrix$Experiment)
+analysisMatrix$SD.Lane.Deviation <- as.numeric(analysisMatrix$SD.Lane.Deviation)
+analysisMatrix$Avg.Speed <- as.numeric(analysisMatrix$Avg.Speed)
+analysisMatrix$SD.Speed <- as.numeric(analysisMatrix$SD.Speed)
+write.csv(analysisMatrix, file = "H:\\NIDA\\analysisMatrix.csv", row.names=FALSE)
