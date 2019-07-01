@@ -96,10 +96,10 @@ eventTimes$total <- as.numeric(eventTimes$total)
 eventTimes <- eventTimes[order(eventTimes$ID, eventTimes$DosingLevel),]
 write.csv(eventTimes, file = "H:\\NIDA\\eventTimes.csv", row.names=FALSE)
 
-# Create dataframe for analysis
 analysisMatrix <- data.frame(matrix(ncol = 7, nrow = 0))
 colnames(analysisMatrix) <- c("ID", "DaqName", "DosingLevel", "Experiment", "SD.Lane.Deviation", "Avg.Speed", "SD.Speed")
-for (i in 1:length(fileNames)){
+#for (i in 1:length(fileNames)){
+for (i in 1:1){
   file <- read.csv(paste0("H:\\NIDA\\ReducedCSV\\", fileNames[i]))
   # detect times for secondary task ----
   times <- detectTime(file)
@@ -109,14 +109,20 @@ for (i in 1:length(fileNames)){
   
   # get output variables for experiment group
   exp <- 1
-  sdLane <- 
-  avgSpeed <- sth
+  sdLane <- sd(file$SCC.Lane.Deviation.2[engage:end])
+  avgSpeed <- mean(file$VDS.Veh.Speed[engage:end])
   sdSpeed <- sd(file$VDS.Veh.Speed[engage:end])
-  analysisMatrix <- rbind(analysisMatrix, c(disp$ID[i], paste0(fileNames[i]), paste0(disp$DosingLevel[i]),
-                                            exp, sdLane, avgSpeed, sdSpeed))
+  analysisMatrix <- rbind(analysisMatrix, 
+                          c(disp$ID[i], paste0(fileNames[i]), paste0(disp$DosingLevel[i]),
+                            exp, sdLane, avgSpeed, sdSpeed),
+                          stringsAsFactors = FALSE)
   # get output variables for control group
   exp <- 0
+  sdLane <- sd(file$SCC.Lane.Deviation.2[start-(end-engage):start])
+  avgSpeed <- mean(file$VDS.Veh.Speed[start-(end-engage):start])
   sdSpeed <- sd(file$VDS.Veh.Speed[start-(end-engage):start])
-  analysisMatrix <- rbind(analysisMatrix, c(disp$ID[i], paste0(fileNames[i]), paste0(disp$DosingLevel[i]),
-                                    exp, sdLane, avgSpeed, sdSpeed))
+  analysisMatrix <- rbind(analysisMatrix, 
+                          c(disp$ID[i], paste0(fileNames[i]), paste0(disp$DosingLevel[i]),
+                            exp, sdLane, avgSpeed, sdSpeed),
+                          stringsAsFactors = FALSE)
 }
