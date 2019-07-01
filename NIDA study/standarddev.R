@@ -99,3 +99,15 @@ for (i in 1:length(files)){
   print(output)
 }
 
+#function for standard deviation of speed
+
+sdspeed <- function(file){
+  return(sd(file$VDS.Veh.Speed[detectTime(file)]))
+}
+
+for (i in 1:length(files)){
+  testfile <- read.csv(paste0("H:\\CannabisStudy\\CSV\\",files[i]))
+  output <- sdspeed(testfile)
+  print(output)
+}
+
