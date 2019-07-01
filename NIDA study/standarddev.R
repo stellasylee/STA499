@@ -1,3 +1,4 @@
+#code for finding standard deviation of lane deviation and mean speed
 install.packages("readxl")
 install.packages("tidyverse")
 install.packages("R.matlab")
