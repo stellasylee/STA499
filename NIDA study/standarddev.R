@@ -51,18 +51,6 @@ detectEngagement <- function (start, end){
   
 }
 
-#testfile for checking how to find standard devation 
-tvar <- c("ScenarioOrder", "Subject")
-sdtest <- updateddisposition[tvar]
-sss <- 5
-eee <- 10
-rowstouse <- sss:eee
-sd(sdtest$ScenarioOrder[rowstouse])
-
-sdonefile <- sd(m1$SCC.Lane.Deviation.2[detectTime(m1)])
-
-sdonefile
-
 #code to calculate sd would be
 #sd(m1$SCC.Lane.Deviation.2[start:end])
 #writing this as a function
