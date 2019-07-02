@@ -22,4 +22,21 @@ plot(fitted(xmdl),residuals(xmdl))
 dfbeta(xmdl)
 
 # http://www.bodowinter.com/tutorial/bw_LME_tutorial.pdf ----
+library(lme4) # contains lmer() function = mixed model of function lm()
+politeness = read.csv("http://www.bodowinter.com/tutorial/politeness_data.csv")
+which(is.na(politeness)==T)
+boxplot(frequency ~ attitude*gender,
+        col=c("white","lightgray"),politeness)
+# both case, median line is lower for the polite than for informal condition
+# following line will cause error because model doesn't have random effect (1| variable)
+# lmer(frequency ~ attitude, data=politeness)
 
+politeness.model = lmer(frequency ~ attitude + (1|subject) + (1|scenario), data=politeness)
+politeness.model
+
+politeness.model = lmer(frequency ~ attitude + gender + (1|subject) + (1|scenario), data=politeness)
+
+# REML=FALSE argument is necessary for likelihood test
+politeness.null = lmer(frequency ~ gender + (1|subject) + (1|scenario), data=politeness, REML=FALSE)
+politeness.model = lmer(frequency ~ attitude +gender + (1|subject) + (1|scenario), data=politeness, REML=FALSE)
+anova(politeness.null,politeness.model)
