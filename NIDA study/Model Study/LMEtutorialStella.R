@@ -40,3 +40,20 @@ politeness.model = lmer(frequency ~ attitude + gender + (1|subject) + (1|scenari
 politeness.null = lmer(frequency ~ gender + (1|subject) + (1|scenario), data=politeness, REML=FALSE)
 politeness.model = lmer(frequency ~ attitude +gender + (1|subject) + (1|scenario), data=politeness, REML=FALSE)
 anova(politeness.null,politeness.model)
+
+# p.15
+politeness.model = lmer(frequency ~ attitude + gender + (1+attitude|subject) + (1+attitude|scenario),
+                        data=politeness,
+                        REML=FALSE)
+coef(politeness.model)
+politeness.null = lmer(frequency ~ gender + (1+attitude|subject) + (1+attitude|scenario),
+                       data=politeness, REML=FALSE)
+anova(politeness.null,politeness.model)
+
+# p.18
+all.res=numeric(nrow(mydataframe))
+# for(i in 1:nrow(mydataframe)){
+#   myfullmodel=lmer(response~predictor+
+#                      (1+predictor|randomeffect),POP[-i,])
+#   all.res[i]=fixef(myfullmodel)[some number]
+# }
