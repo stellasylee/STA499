@@ -29,7 +29,6 @@ convertToCSV <- function (fileName, id, visit){
   data <- temp$elemData
   # Create dataframe including participantID, visit
   rowN <- length(data[[1]]) # how many rows this data contain
-  leng <- length(data[[1]])
   tempdf <- data.frame("DaqName" = rep(fileName, rowN),"ID" = rep(id, rowN), "Visit" = rep(visit, rowN))
   r <- rownames(data)
   # Add variables from elemData
