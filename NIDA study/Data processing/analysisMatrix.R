@@ -134,3 +134,40 @@ analysisMatrix$SD.Lane.Deviation <- as.numeric(analysisMatrix$SD.Lane.Deviation)
 analysisMatrix$Avg.Speed <- as.numeric(analysisMatrix$Avg.Speed)
 analysisMatrix$SD.Speed <- as.numeric(analysisMatrix$SD.Speed)
 write.csv(analysisMatrix, file = "H:\\NIDA\\analysisMatrix.csv", row.names=FALSE)
+
+# Create dataframe for analysis (with available time as starting point of experiment group)
+analysisMatrix <- data.frame(matrix(ncol = 7, nrow = 0))
+for (i in 1:length(fileNames)){
+  file <- read.csv(paste0("H:\\NIDA\\ReducedCSV\\", fileNames[i]))
+  # detect times for secondary task ----
+  times <- detectTime(file)
+  start <- times[1]
+  end <- times[2]
+  
+  # get output variables for experiment group
+  exp <- 1
+  sdLane <- sd(file$SCC.Lane.Deviation.2[start:end])
+  avgSpeed <- mean(file$VDS.Veh.Speed[start:end])
+  sdSpeed <- sd(file$VDS.Veh.Speed[start:end])
+  analysisMatrix <- rbind(analysisMatrix, 
+                          c(disp$ID[i], paste0(fileNames[i]), paste0(disp$DosingLevel[i]),
+                            exp, sdLane, avgSpeed, sdSpeed),
+                          stringsAsFactors = FALSE)
+  # get output variables for control group
+  exp <- 0
+  sdLane <- sd(file$SCC.Lane.Deviation.2[(start-(end-start)):start])
+  avgSpeed <- mean(file$VDS.Veh.Speed[(start-(end-start)):start])
+  sdSpeed <- sd(file$VDS.Veh.Speed[(start-(end-start)):start])
+  analysisMatrix <- rbind(analysisMatrix, 
+                          c(disp$ID[i], paste0(fileNames[i]), paste0(disp$DosingLevel[i]),
+                            exp, sdLane, avgSpeed, sdSpeed),
+                          stringsAsFactors = FALSE)
+}
+colnames(analysisMatrix) <- c("ID", "DaqName", "DosingLevel", "Experiment",
+                              "SD.Lane.Deviation", "Avg.Speed", "SD.Speed")
+analysisMatrix$ID <- as.numeric(analysisMatrix$ID)
+analysisMatrix$Experiment <- as.numeric(analysisMatrix$Experiment)
+analysisMatrix$SD.Lane.Deviation <- as.numeric(analysisMatrix$SD.Lane.Deviation)
+analysisMatrix$Avg.Speed <- as.numeric(analysisMatrix$Avg.Speed)
+analysisMatrix$SD.Speed <- as.numeric(analysisMatrix$SD.Speed)
+write.csv(analysisMatrix, file = "H:\\NIDA\\analysisWithoutEngagementPoint.csv", row.names=FALSE)
