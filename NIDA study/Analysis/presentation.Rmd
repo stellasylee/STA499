@@ -1,0 +1,56 @@
+---
+title: "NADS Presentation"
+author: "Stella Lee, Ishaan Tibrewal"
+date: "July 8, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(stringr)
+library(tidyverse)
+library ("dplyr")
+library(ggplot2)
+```
+
+# Cleaning Data
+
+* filtering for disposition files --> artist/menu task
+  * colored disposition files
+* select necessary variables for analysis
+```{r}
+
+```
+
+# Secondary Task Detection
+* engagement point
+  * used changepoint AMOC method (meanvar) with speed, lane deviation and minimum point
+  * no invalid changepoint detection --> compare if engagement point was predicted after participant was incorrect
+
+* exceptions:
+  * two simulation with second instance not involved --> discard
+```{r}
+
+```
+# Preminary Visualizations
+
+## Question: We found that total time (from task available to complete) is longer as participant experience more task.
+```{r}
+eventTimes <- read.csv("H:\\NIDA\\eventTimesWith3.csv")
+eventTimes$eventNum <- as.factor (eventTimes$eventNum)
+eventTimesByInstance <- group_by(eventTimes, eventNum)
+summarize(eventTimesByInstance, 
+          min = min(total, na.rm = TRUE), 
+          Q1 = quantile(total, .25, na.rm = TRUE), 
+          median = median(total, na.rm = TRUE), 
+          Q3 = quantile(total, .75, na.rm = TRUE), 
+          max = max(total, na.rm = TRUE))
+
+ggplot(eventTimes, aes(x = eventNum, y = total)) + geom_boxplot()
+```
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
