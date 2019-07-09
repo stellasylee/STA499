@@ -13,6 +13,7 @@ library(dplyr)
 library(tidyr)
 library(knitr)
 library(plotly)
+library(changepoint)
 ```
 
 ```{r, echo = FALSE}
@@ -44,7 +45,50 @@ We determined changepoint with mean and variance of speed and lane deviation. Th
 
 ***Example***
 ```{r}
+engageSimulation <- read.csv("H:\\NIDA\\ReducedCSV\\20130109090012.csv")
+# detectTime <- function (file, s, valid, eventNum){
+#   correctResponse <- switch(eventNum,
+#                             c(1, 4, 7, 10, 16, 19),
+#                             c(2, 5, 8, 11, 17, 20),
+#                             c(3, 6, 9, 12, 18, 21))
+#   # start = when task was available
+#   for (start in s: nrow(file)){
+#     if ((valid == TRUE) && (file$SCC.MenuSearch[start] %in% correctResponse)){
+#       break
+#     }else if (file$SCC.MenuSearch[start] == 0){
+#       valid <- TRUE
+#     }
+#   }
+#   
+#   for (end in (start+1): nrow(file)){
+#     if (file$AUX1.MenuScore[end] > 0){
+#       break
+#     }
+#   }
+#   return (c(start, end))
+# }
+# times <- detectTime (engageSimulation, 1, FALSE, 1)
+set.seed(1)
+speed <- engageSimulation$VDS.Veh.Speed[44530:44702]
+meanDetectS <- cpt.mean(speed, method="AMOC")
+varDetectS <- cpt.var(speed, method="AMOC")
+meanvarDetectS <- cpt.meanvar(speed, method="AMOC")
 
+meanDetectL <- cpt.mean(engageSimulation$SCC.Lane.Deviation.2[44530:44702], method="AMOC")
+varDetectL <- cpt.var(engageSimulation$SCC.Lane.Deviation.2[44530:44702], method="AMOC")
+meanvarDetectL <- cpt.meanvar(engageSimulation$SCC.Lane.Deviation.2[44530:44702], method="AMOC")
+
+plot(engageSimulation$AUX1.MenuScore[44530:44702])
+par(mfrow = c(2, 3))  # 3 rows and 2 columns
+for (i in 1:6) {
+  switch(i,
+         plot(meanDetectS, main = "mean", ylab="speed"),
+         plot(varDetectS, main = "variance", ylab="speed"),
+         plot(meanvarDetectS, main = "mean and variance", ylab="speed"),
+         plot(meanDetectL, main = "mean", ylab="lane deviation"),
+         plot(varDetectL, main = "variance", ylab="lane deviation"),
+         plot(meanvarDetectL, main = "mean and variance", ylab="lane deviation"))
+}
 ```
 
 ***exception***
