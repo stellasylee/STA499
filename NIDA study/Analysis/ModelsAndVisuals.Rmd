@@ -61,7 +61,8 @@ ggplot(d3cp, aes(x = DosingLevel, y = SD.Lane.Deviation, color = factor(Experime
 
 diff <- d3cp[d3cp$Experiment == 1, ]$SD.Lane.Deviation - d3cp[d3cp$Experiment == 0, ]$SD.Lane.Deviation
 diff_speed <- d3cp[d3cp$Experiment == 1, ]$Avg.Speed - d3cp[d3cp$Experiment == 0, ]$Avg.Speed
-
+speed_ctrl <- d3cp[d3cp$Experiment == 0, ]$Avg.Speed
+speed_trt <- d3cp[d3cp$Experiment == 1, ]$Avg.Speed 
 
 df <- data.frame(diff_speed = diff_speed, diff_SD_lane_pos = diff, 
                  DosingLevel = d3cp[d3cp$Experiment == 1, ]$DosingLevel,
@@ -79,9 +80,11 @@ ggplot(df, aes(x = DosingLevel, y = diff_SD_lane_pos)) + geom_boxplot(outlier.sh
 ```{r, echo = FALSE}
 df2 <- separate(df, col = DosingLevel, into = c("THC_Condition","ALC_Condition"), sep = -1)
 
-p1 <- ggplot(df2, aes(x = factor(SubjectID), y = diff_SD_lane_pos, color = THC_Condition, pch = ALC_Condition)) + 
+
+
+p1 <- ggplot(df2, aes(x = factor(SubjectID), y = diff_SD_lane_pos, color = THC_Condition, pch = ALC_Condition, text = paste("CTRL speed:", round(speed_ctrl,2), "<br> TASK speed:", round(speed_trt),2, "<br> Speed change:", round(diff_speed,2)))) + 
   geom_point() + labs(x = "Subject ID", y = "Paired Difference in Std Lane Dev")
-ggplotly(p1)
+ggplotly(p1, tooltip = "text")
 ```
 
 
