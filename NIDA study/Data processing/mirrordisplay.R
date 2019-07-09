@@ -128,3 +128,66 @@ eventTimesmirror$end <- as.numeric(eventTimesmirror$end)
 eventTimesmirror$total <- as.numeric(eventTimesmirror$total)
 eventTimesmirror <- eventTimesmirror[order(eventTimesmirror$ID, eventTimesmirror$DosingLevel),]
 write.csv(eventTimesmirror, file = "H:\\CannabisStudy\\eventTimesmirror.csv", row.names=FALSE)
+
+#creating a matrix with the output variables for experimental and control group
+
+#creating an  empty dataframe for analyzing the data
+
+analysisMatrixmirror <- NULL
+
+for (i in 1:length(files)){
+  file <- read.csv(paste0("H:\\CannabisStudy\\SideMirrorCSV\\", files[i]))
+  done <- TRUE
+  eventnumber <- 1
+  # done <- FALSE when there is no more event in this file
+  while(done){
+    # update the start as the end of last event
+    start <- 1 
+    if (eventnumber != 1){
+      start <- end + 1
+    }
+    # detect mirror event
+    times <- mirrordetect(file, start)
+    if (times[1] == FALSE){ # no more event
+      done <- FALSE
+    }else if (times[1] != -1){ # check valid event
+      start <- times[1]
+      end <- times [2]
+      engage <- MirrorEngagement(file, start, end)
+    
+      #finding output for experimental group
+      exp <- 1 
+      SdLanemirror <- sd(file$SCC.Lane.Deviation.2[engage:end])
+      avgSpeedmirror <- mean(file$VDS.Veh.Speed[engage:end])
+      sdSpeedmirror <- sd(file$VDS.Veh.Speed[engage:end])
+      analysisMatrixmirror <- rbind(analysisMatrixmirror,
+                                    c(disp$ID[i], paste0(fileNames[i]), paste0(disp$DosingLevel[i]),
+                                    exp, eventnumber, SdLanemirror, avgSpeedmirror, sdSpeedmirror))
+      #output for control group
+      exp <- 0
+      SdLanemirror <- sd(file$SCC.Spline.Lane.Deviation.2[((start) - (end - engage)):start])
+      avgSpeedmirror <- mean(file$VDS.Veh.Speed[((start) - (end - engage)):start])
+      sdSpeedmirror <- sd(file$VDS.Veh.Speed[((start) - (end - engage)):start])
+      
+      analysisMatrixmirror <- rbind(analysisMatrixmirror,
+                                    c(disp$ID[i], paste0(fileNames[i]), paste0(disp$DosingLevel[i]),
+                                      exp, eventnumber, SdLanemirror, avgSpeedmirror, sdSpeedmirror)) 
+      
+    }
+    
+    end <- times [2]
+    eventnumber <- eventnumber + 1
+    
+  }
+}
+
+#renaming columns and writing to a csv
+
+colnames(analysisMatrixmirror) <- c("ID", "FileName", "DosingLevel", "experiment", "eventnumber", "SdLanemirror", "avgSpeedmirror", "sdSpeedmirror")
+analysisMatrixmirror$ID <- as.numeric(analysisMatrixmirror$ID)
+analysisMatrixmirror$start <- as.numeric(analysisMatrixmirror$start)
+analysisMatrixmirror$engagement <- as.numeric(analysisMatrixmirror$engagement)
+analysisMatrixmirror$end <- as.numeric(analysisMatrixmirror$end)
+analysisMatrixmirror$total <- as.numeric(analysisMatrixmirror$total)
+analysisMatrixmirror <- analysisMatrixmirror[order(analysisMatrixmirror$ID, analysisMatrixmirror$DosingLevel),]
+write.csv(analysisMatrixmirror, file = "H:\\CannabisStudy\\analysisMatrixmirror.csv", row.names=FALSE)
