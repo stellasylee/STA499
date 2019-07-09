@@ -82,15 +82,17 @@ MirrorEngagement <- function(file, start, end){
 }
 library(stringr)
 #creating a dataframe called eventTimesmirror to store the times
-disp <- read.csv("H:/CannabisStudy/dispositionUpdate.csv")
+disp <- read_excel("H:/CannabisStudy/disposition.xls")
+disp <- filter(dispo, dispo$Analyze == "X" | dispo$Reduced == "X")
 disp$DaqName <- str_replace(disp$DaqName, ".daq", ".csv")
+disp$ID <- as.numeric(substr(disp$DaqPath,1,3))
 files <- disp$DaqName
 
 eventTimesmirror <- data.frame(matrix(ncol = 8, nrow = 0))
 
 #finding start engagement and end for all the files and storing it
 for (i in 1:length(files)){
-  file <- read.csv(paste0("H:\\CannabisStudy\\CSV\\", files[i]))
+  file <- read.csv(paste0("H:\\CannabisStudy\\SideMirrorCSV\\", files[i]))
   done <- TRUE
   eventnumber <- 1
   while(done){
@@ -116,7 +118,7 @@ for (i in 1:length(files)){
   }
 }
 
-#renaming columns in the dataframe ad writing to a csv file
+#renaming columns in the dataframe and writing dataframe into a csv file
 
 colnames(eventTimesmirror) <- c("ID", "DaqName", "DosingLevel", "eventNum", "start", "engagement", "end", "total")
 eventTimesmirror$ID <- as.numeric(eventTimesmirror$ID)
@@ -126,8 +128,3 @@ eventTimesmirror$end <- as.numeric(eventTimesmirror$end)
 eventTimesmirror$total <- as.numeric(eventTimesmirror$total)
 eventTimesmirror <- eventTimesmirror[order(eventTimesmirror$ID, eventTimesmirror$DosingLevel),]
 write.csv(eventTimesmirror, file = "H:\\CannabisStudy\\eventTimesmirror.csv", row.names=FALSE)
-
-
-
-
-#finding start, engagement, end and total time taken for side mirror task
