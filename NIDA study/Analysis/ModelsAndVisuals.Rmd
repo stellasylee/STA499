@@ -1,0 +1,168 @@
+---
+title: "Analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(ggplot2)
+library(gridExtra)
+library(lme4)
+library(lmerTest)
+library(dplyr)
+library(tidyr)
+library(knitr)
+```
+
+```{r}
+# Load data
+d3cp <- read.csv('C:\\Users\\millerry\\Downloads\\analysisTasks3.csv')
+d3n <- read.csv('C:\\Users\\millerry\\Downloads\\analysisTasksNoEngage3.csv')
+
+#d3cp <- read.csv('C:\\Users\\Ryan M\\Downloads\\analysisTasks3.csv')
+#d3n <- read.csv('C:\\Users\\Ryan M\\Downloads\\analysisTasksNoEngage3.csv')
+
+# Manually remove repeats
+d3n <- d3n[-which(d3n$DaqName %in% c("20130612092744.csv", "20140104105417.csv")),]
+d3cp <- d3cp[-which(d3cp$DaqName %in% c("20130612092744.csv", "20140104105417.csv")),]
+```
+
+## Visuals
+
+Standard deviation of lane deviation by dosage group and secondary task engagement:
+
+```{r, echo = FALSE}
+ggplot(data = d3cp, aes(x = SD.Lane.Deviation, fill = factor(Experiment))) + geom_density(alpha = .5) + facet_wrap( ~ DosingLevel) + labs(fill = "Secondary Task", title = "Engagement via Changepoint Detection")
+
+ggplot(data = d3n, aes(x = SD.Lane.Deviation, fill = factor(Experiment))) + geom_density(alpha = .5) + facet_wrap( ~ DosingLevel) + labs(fill = "Secondary Task", title = "No Changepoint Detection")
+
+```
+
+Boxplot version:
+
+```{r, echo = FALSE}
+ggplot(d3cp, aes(x = DosingLevel, y = SD.Lane.Deviation, color = factor(Experiment))) + geom_boxplot() + labs(color = "Secondary Task", title = "Engagement via Changepoint Detection")
+
+```
+
+Paired version:
+
+```{r, echo = FALSE}
+
+diff <- d3cp[d3cp$Experiment == 1, ]$SD.Lane.Deviation - d3cp[d3cp$Experiment == 0, ]$SD.Lane.Deviation
+diff_speed <- d3cp[d3cp$Experiment == 1, ]$Avg.Speed - d3cp[d3cp$Experiment == 0, ]$Avg.Speed
+
+
+df <- data.frame(diff_speed = diff_speed, diff_SD_lane_pos = diff, 
+                 DosingLevel = d3cp[d3cp$Experiment == 1, ]$DosingLevel,
+                 SubjectID = d3cp[d3cp$Experiment == 1, ]$ID,
+                 EventID = d3cp[d3cp$Experiment == 1, ]$eventNum)
+
+ggplot(df, aes(x = DosingLevel, y = diff_SD_lane_pos)) + geom_boxplot(outlier.shape = NA) + geom_jitter(width = .15) + geom_abline(intercept = 0, slope = 0, lty = "dashed") + labs(y = "Paired within subject difference")
+```
+
+## Tables
+
+Secondary task segments available for analysis for each of the 19 subjects:
+
+```{r, echo = FALSE}
+tab1 <- table(df$SubjectID, df$DosingLevel)
+rownames(tab1) <- paste("Subject ID",rownames(tab1))
+tab1 <- addmargins(tab1)
+kable(tab1)
+```
+
+Marginally, there is a statistically significant effect of secondary task engagement (for most Dose/Event combos) on standard deviation of lane deviation (p-values are from paired t-tests within subject/event):
+
+```{r, echo = FALSE}
+res <- df %>% group_by(DosingLevel, EventID) %>% summarize(mean_SDL = mean(diff_SD_lane_pos),
+                                                           sd_SDL = sd(diff_SD_lane_pos), n = n(),
+                                           p_value = pmin(1,round(2*pnorm(-abs(mean(diff_SD_lane_pos))/
+                                                                     (sd(diff_SD_lane_pos)/sqrt(n()))), 5)))
+
+signif <- function(inp){
+                if(inp >= .1) " "
+                else if (inp < .1 & inp >= .05) "."
+                else if (inp < .05 & inp >= .01) "*"
+                else if (inp< .01 & inp >= .001) "**"
+                else if (inp< .001) "***"
+}
+
+res$signif <- apply(matrix(res$p_value, ncol = 1), 1, signif)
+
+kable(res)
+```
+
+```{r, include=FALSE, eval=FALSE}
+subj_ids <- unique(df$SubjectID)
+wide_df <- NULL
+for(i in 1:length(subj_ids)){
+temp <- filter(df, SubjectID == subj_ids[i])[,-1]
+if(subj_ids[i] != 21 & subj_ids[i] != 123){
+wide_df <- rbind(wide_df, spread(temp,key = DosingLevel, value = diff_SD_lane_pos))
+}
+}
+
+with(filter(wide_df, EventID ==1), t.test(XM, XP, paired = TRUE))
+with(filter(wide_df, EventID ==1), t.test(XM, YM, paired = TRUE))
+
+```
+
+## Models
+
+### Model 1 - Base Model
+
+$$y_{ij} = \beta_0 + \gamma_i + \beta_1 SecTask_{ij} + \beta_2 DoseXM_{ij} + \beta_3 DoseYM_{ij} + \ldots + \epsilon_{ij}$$
+
+- $y_{ij}$ = Standard Deviation of lane deviation for subject $i$ at dosing level $j$
+- $\gamma_i$ = subject specific random intercept
+- $SecTask_{ij}$ = dummy variable indicating observation measures performance during secondary task (1 = sec task, 0 = control segment)
+- $DoseAA_{ij}$ = dummy variable for dose = "AA" (1 = specified dose, 0 = reference group)
+    - In our models we will re-define the reference group such that all dose effects are positive
+
+```{r}
+d3cp$Dose_Grp <- relevel(d3cp$DosingLevel, ref = "ZP")
+fit <- lmer(data = d3cp, SD.Lane.Deviation ~ Dose_Grp +  Experiment  + (1 | ID))
+
+fit_sum <- summary(fit)
+kable(round(fit_sum$coefficients, 4))
+kable(round(anova(fit), 4))
+```
+
+This model suggests a significant effect of secondary task engagement on standard deviation of lane deviation, but no impact of experimental condition
+
+- A few problems with it:
+    - Doesn't adjust for differences in speed
+    - Skewed distribution of `SD.Lane.Deviation`
+    - Treats all 3 secondary tasks as the same
+    - It also isn't looking for effect modification by `Dose_Grp`
+
+### Model 2 - Log-transformed outcome, control for eventNum and Avg.Speed
+
+```{r}
+fit <- lmer(data = d3cp, log2(SD.Lane.Deviation) ~ relevel(DosingLevel, ref = "XM") + 
+              factor(eventNum)  + Avg.Speed + Experiment + (1 | ID))
+
+kable(round(summary(fit)$coefficients, 4))
+kable(round(anova(fit), 4))
+```
+
+### Model 3 - Log-transformed outcome, control for eventNum and Avg.Speed, test for effect modification
+
+- Does `Dose_Grp` modify the performance deteroration seen during secondary tasks?
+
+```{r}
+fit <- lmer(data = d3cp, log2(SD.Lane.Deviation) ~ relevel(DosingLevel, ref = "ZP") + 
+              factor(eventNum)  + Avg.Speed + Experiment + 
+              relevel(DosingLevel, ref = "ZP"):Experiment + (1 | ID))
+kable(round(summary(fit)$coefficients, 4))
+kable(round(anova(fit),4))
+```
+
+### Model 4- Paired Difference as outcome
+
+```{r}
+fit <- lmer(data = df, diff_SD_lane_pos ~ relevel(DosingLevel, ref = "YM") + factor(EventID) + diff_speed + (1 | SubjectID))
+kable(round(summary(fit)$coefficients, 4))
+kable(round(anova(fit),4))
+```
