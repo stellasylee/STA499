@@ -34,8 +34,7 @@ d3n <- read.csv("H:\\NIDA\\AnalysisTasksNoEngage3.csv")
  + check if simulation contains three instances
  + if both non-restart and restart file contains 3 instances, used non-restart file (Participant 7 YP, Participant 21 ZM, Participant 123 ZM)
 
-## Secondary Task Detection
-
+## Artist/ Menu Task Detection
 ### Find Engagement point
 We used AMOC method in changepoint library with assumption that there is single potential changepoint from time when task was available to participant to when task was correctly completed.
 
@@ -44,7 +43,7 @@ We determined changepoint with mean and variance of speed and lane deviation. Th
  * no predicted engagement point was after the participant was incorrect
 
 ***Example***
-```{r}
+```{r, echo = FALSE}
 engageSimulation <- read.csv("H:\\NIDA\\ReducedCSV\\20130109090012.csv")
 # detectTime <- function (file, s, valid, eventNum){
 #   correctResponse <- switch(eventNum,
@@ -107,18 +106,7 @@ using task availabe time: ![](H:\\start.png)
 
 using predictedengagement time: ![](H:\\engagement.png) 
 
-Artist/Menu task segments available for analysis for each of the 19 subjects:
 
-```{r, echo = FALSE}
-tab1 <- table(df$SubjectID, df$DosingLevel)
-rownames(tab1) <- paste("Subject ID",rownames(tab1))
-tab1 <- addmargins(tab1)
-kable(tab1)
-```
-
-**Conclusions**:
-
-- 19 subjects, only 2 missing events
 
 ## Visuals
 
@@ -192,6 +180,19 @@ ggplotly(p1, tooltip = "text")
 - Difficult to gauge condition effects from this plot
 
 ## Tables
+Artist/Menu task segments available for analysis for each of the 19 subjects:
+
+```{r, echo = FALSE}
+tab1 <- table(df$SubjectID, df$DosingLevel)
+rownames(tab1) <- paste("Subject ID",rownames(tab1))
+tab1 <- addmargins(tab1)
+kable(tab1)
+```
+
+**Conclusions**:
+
+- 19 subjects, only 2 missing events
+
 ### Marginal Statistics
 
 Marginally, there is a statistically significant effect of secondary task engagement (for most Dose/Event combos) on standard deviation of lane deviation (p-values are from paired t-tests within subject/event):
