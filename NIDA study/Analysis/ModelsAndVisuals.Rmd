@@ -12,6 +12,7 @@ library(lmerTest)
 library(dplyr)
 library(tidyr)
 library(knitr)
+library(plotly)
 ```
 
 ```{r}
@@ -38,6 +39,10 @@ ggplot(data = d3n, aes(x = SD.Lane.Deviation, fill = factor(Experiment))) + geom
 
 ```
 
+**Conclusions**:
+- Not much difference when deriving engagement segment using changepoint detection vs. using entire period task is available
+- We can still analyze the data both ways, but will use the changepoint detection approach for now
+
 Boxplot version:
 
 ```{r, echo = FALSE}
@@ -45,7 +50,12 @@ ggplot(d3cp, aes(x = DosingLevel, y = SD.Lane.Deviation, color = factor(Experime
 
 ```
 
-Paired version:
+**Conclusions**:
+- Standard Deviation of Lane Deviation is much higher when engaged in secondary task (artist-menu search)
+- Similar differences across experimental conditions
+- This visual ignores pairing of segments/participants
+
+### Paired (trt/control) version:
 
 ```{r, echo = FALSE}
 
@@ -60,6 +70,20 @@ df <- data.frame(diff_speed = diff_speed, diff_SD_lane_pos = diff,
 
 ggplot(df, aes(x = DosingLevel, y = diff_SD_lane_pos)) + geom_boxplot(outlier.shape = NA) + geom_jitter(width = .15) + geom_abline(intercept = 0, slope = 0, lty = "dashed") + labs(y = "Paired within subject difference")
 ```
+
+**Conclusions**:
+- Within each experiment condition individual subject performance is worse when engaged in secondary task
+
+### Within Subject Performance Differences by Condition
+
+```{r, echo = FALSE}
+df2 <- separate(df, col = DosingLevel, into = c("THC_Condition","ALC_Condition"), sep = -1)
+
+p1 <- ggplot(df2, aes(x = factor(SubjectID), y = diff_SD_lane_pos, color = THC_Condition, pch = ALC_Condition)) + 
+  geom_point() + labs(x = "Subject ID", y = "Paired Difference in Std Lane Dev")
+ggplotly(p1)
+```
+
 
 ## Tables
 
