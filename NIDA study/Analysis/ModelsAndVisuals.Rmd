@@ -22,10 +22,6 @@ d3n <- read.csv('C:\\Users\\millerry\\Downloads\\analysisTasksNoEngage3.csv')
 
 #d3cp <- read.csv('C:\\Users\\Ryan M\\Downloads\\analysisTasks3.csv')
 #d3n <- read.csv('C:\\Users\\Ryan M\\Downloads\\analysisTasksNoEngage3.csv')
-
-# Manually remove repeats
-d3n <- d3n[-which(d3n$DaqName %in% c("20130612092744.csv", "20140104105417.csv")),]
-d3cp <- d3cp[-which(d3cp$DaqName %in% c("20130612092744.csv", "20140104105417.csv")),]
 ```
 
 ## Visuals
@@ -40,6 +36,7 @@ ggplot(data = d3n, aes(x = SD.Lane.Deviation, fill = factor(Experiment))) + geom
 ```
 
 **Conclusions**:
+
 - Not much difference when deriving engagement segment using changepoint detection vs. using entire period task is available
 - We can still analyze the data both ways, but will use the changepoint detection approach for now
 
@@ -51,6 +48,7 @@ ggplot(d3cp, aes(x = DosingLevel, y = SD.Lane.Deviation, color = factor(Experime
 ```
 
 **Conclusions**:
+
 - Standard Deviation of Lane Deviation is much higher when engaged in secondary task (artist-menu search)
 - Similar differences across experimental conditions
 - This visual ignores pairing of segments/participants
@@ -73,6 +71,7 @@ ggplot(df, aes(x = DosingLevel, y = diff_SD_lane_pos)) + geom_boxplot(outlier.sh
 ```
 
 **Conclusions**:
+
 - Within each experiment condition individual subject performance is worse when engaged in secondary task
 
 ### Within Subject Performance Differences by Condition
@@ -87,6 +86,10 @@ p1 <- ggplot(df2, aes(x = factor(SubjectID), y = diff_SD_lane_pos, color = THC_C
 ggplotly(p1, tooltip = "text")
 ```
 
+**Conclusions**:
+
+- Some (but not all) of the instances where performance was better while engaged in the secondary task had slower speeds during the task
+- Difficult to gauge condition effects from this plot
 
 ## Tables
 
@@ -98,6 +101,12 @@ rownames(tab1) <- paste("Subject ID",rownames(tab1))
 tab1 <- addmargins(tab1)
 kable(tab1)
 ```
+
+**Conclusions**:
+
+- 19 subjects, only 2 missing events
+
+### Marginal Statistics
 
 Marginally, there is a statistically significant effect of secondary task engagement (for most Dose/Event combos) on standard deviation of lane deviation (p-values are from paired t-tests within subject/event):
 
@@ -156,9 +165,12 @@ kable(round(fit_sum$coefficients, 4))
 kable(round(anova(fit), 4))
 ```
 
-This model suggests a significant effect of secondary task engagement on standard deviation of lane deviation, but no impact of experimental condition
+**Conclusions**:
 
-- A few problems with it:
+- Significant effect of secondary task engagement on standard deviation of lane deviation
+- No effect of experimental condition
+
+- A few problems with this model:
     - Doesn't adjust for differences in speed
     - Skewed distribution of `SD.Lane.Deviation`
     - Treats all 3 secondary tasks as the same
@@ -174,6 +186,11 @@ kable(round(summary(fit)$coefficients, 4))
 kable(round(anova(fit), 4))
 ```
 
+**Conclusions**:
+
+- Secondary task engagement, speed, and eventID are all important predictors of standard deviation of lane deviation
+- Experimental condition is not significant when controlling for these other predictors
+
 ### Model 3 - Log-transformed outcome, control for eventNum and Avg.Speed, test for effect modification
 
 - Does `Dose_Grp` modify the performance deteroration seen during secondary tasks?
@@ -186,10 +203,33 @@ kable(round(summary(fit)$coefficients, 4))
 kable(round(anova(fit),4))
 ```
 
-### Model 4- Paired Difference as outcome
+**Conclusions**:
+
+- `Dose_Grp` doesn't appear to modify the effect of secondary task engagement
+
+### Model 4 - Paired Difference as Outcome
 
 ```{r}
 fit <- lmer(data = df, diff_SD_lane_pos ~ relevel(DosingLevel, ref = "YM") + factor(EventID) + diff_speed + (1 | SubjectID))
 kable(round(summary(fit)$coefficients, 4))
 kable(round(anova(fit),4))
 ```
+
+**Conclusions**:
+
+- Little substantive difference analyzing the data this way
+
+### Model 5 - Avg Speed as Outcome
+
+```{r}
+fit <- lmer(data = d3cp, Avg.Speed ~ relevel(DosingLevel, ref = "YP") + 
+              factor(eventNum)  + Experiment   +  (1 | ID))
+kable(round(summary(fit)$coefficients, 4))
+kable(round(anova(fit),4))
+```
+
+**Conclusions**:
+
+- Dosing condition has a highly significant impact on participant speed
+- Secondary task engagement doesn't predict speed
+- No interaction between dosing and secondary task engagment (model testing this not shown, p > .9)
