@@ -21,7 +21,7 @@ for (i in 1:length(fileNames)){
 disp$DaqName <- str_replace(disp$DaqName, ".daq", ".csv")
 disp <- filter (disp, !(DaqName %in% noevents))
 # drop when restart also has 3 events
-disp <- disp[!(disp$DaqName=="20121205113805.csv"),]
+disp <- disp[!(disp$DaqName %in% c("20121205113805.csv". "20130612092744.csv", "20140104105417.csv")),]
 ID <- as.numeric(substr(disp$DaqPath,1,3))
 newDisp <- data.frame(ID, disp[,5:7], disp[,9:16], disp[,18:19]) 
 
