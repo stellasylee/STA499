@@ -15,85 +15,55 @@ library(knitr)
 library(plotly)
 ```
 
-```{r}
+```{r, echo = FALSE}
 # Load data
-d3cp <- read.csv('C:\\Users\\millerry\\Downloads\\analysisTasks3.csv')
-d3n <- read.csv('C:\\Users\\millerry\\Downloads\\analysisTasksNoEngage3.csv')
-
-#d3cp <- read.csv('C:\\Users\\Ryan M\\Downloads\\analysisTasks3.csv')
-#d3n <- read.csv('C:\\Users\\Ryan M\\Downloads\\analysisTasksNoEngage3.csv')
+## Event time data
+eventTimes <- read.csv("H:\\NIDA\\eventTimesWith3.csv")
+eventTimes$eventNum <- as.factor (eventTimes$eventNum)
+## Output variables for analysis
+d3cp <- read.csv("H:\\NIDA\\AnalysisTasks3.csv")
+d3n <- read.csv("H:\\NIDA\\AnalysisTasksNoEngage3.csv")
 ```
 
-## Visuals
+## Cleaning Data
+1. .mat to .csv file for fasten analysis process
+ + select elemDataI and save into .mat format
+ + select necessary variables for analysis
+2. filter disposition file for ***artists/menu task***
+ + check if simulation contains three instances
+ + if both non-restart and restart file contains 3 instances, used non-restart file (Participant 7 YP, Participant 21 ZM, Participant 123 ZM)
 
-Standard deviation of lane deviation by dosage group and secondary task engagement:
+## Secondary Task Detection
 
+### Find Engagement point
+We used AMOC method in changepoint library with assumption that there is single potential changepoint from time when task was available to participant to when task was correctly completed.
+
+We determined changepoint with mean and variance of speed and lane deviation. Then, selected minimum timeframe (faster changepoint detection result) as predicted engagement point for artist task. 
+
+ * no predicted engagement point was after the participant was incorrect
+
+***Example***
+```{r}
+
+```
+
+***exception***
+Two simulations had one artist/menu task engaged (score didn't change when task was available): Participant 123 YP (20140111102408.csv) and Participant 129 XM (20140104090136.csv)
 ```{r, echo = FALSE}
-ggplot(data = d3cp, aes(x = SD.Lane.Deviation, fill = factor(Experiment))) + geom_density(alpha = .5) + facet_wrap( ~ DosingLevel) + labs(fill = "Secondary Task", title = "Engagement via Changepoint Detection")
-
-ggplot(data = d3n, aes(x = SD.Lane.Deviation, fill = factor(Experiment))) + geom_density(alpha = .5) + facet_wrap( ~ DosingLevel) + labs(fill = "Secondary Task", title = "No Changepoint Detection")
-
+tempSimuation <- read.csv("H:\\NIDA\\ReducedCSV\\20140104090136.csv")
+ggplot(data = tempSimuation, aes(x = as.numeric(row.names(tempSimuation)))) +
+  geom_line(aes(y = AUX1.MenuScore)) +
+  labs(title = "Engagement in Secondary Task for Participant 129 XM") +
+  xlab("time") 
 ```
 
-**Conclusions**:
+### Define Control vs Experiment Group
+Start of experiment group: 
+using task availabe time: ![](H:\\start.png) 
 
-- Not much difference when deriving engagement segment using changepoint detection vs. using entire period task is available
-- We can still analyze the data both ways, but will use the changepoint detection approach for now
+using predictedengagement time: ![](H:\\engagement.png) 
 
-Boxplot version:
-
-```{r, echo = FALSE}
-ggplot(d3cp, aes(x = DosingLevel, y = SD.Lane.Deviation, color = factor(Experiment))) + geom_boxplot() + labs(color = "Secondary Task", title = "Engagement via Changepoint Detection")
-
-```
-
-**Conclusions**:
-
-- Standard Deviation of Lane Deviation is much higher when engaged in secondary task (artist-menu search)
-- Similar differences across experimental conditions
-- This visual ignores pairing of segments/participants
-
-### Paired (trt/control) version:
-
-```{r, echo = FALSE}
-
-diff <- d3cp[d3cp$Experiment == 1, ]$SD.Lane.Deviation - d3cp[d3cp$Experiment == 0, ]$SD.Lane.Deviation
-diff_speed <- d3cp[d3cp$Experiment == 1, ]$Avg.Speed - d3cp[d3cp$Experiment == 0, ]$Avg.Speed
-speed_ctrl <- d3cp[d3cp$Experiment == 0, ]$Avg.Speed
-speed_trt <- d3cp[d3cp$Experiment == 1, ]$Avg.Speed 
-
-df <- data.frame(diff_speed = diff_speed, diff_SD_lane_pos = diff, 
-                 DosingLevel = d3cp[d3cp$Experiment == 1, ]$DosingLevel,
-                 SubjectID = d3cp[d3cp$Experiment == 1, ]$ID,
-                 EventID = d3cp[d3cp$Experiment == 1, ]$eventNum)
-
-ggplot(df, aes(x = DosingLevel, y = diff_SD_lane_pos)) + geom_boxplot(outlier.shape = NA) + geom_jitter(width = .15) + geom_abline(intercept = 0, slope = 0, lty = "dashed") + labs(y = "Paired within subject difference")
-```
-
-**Conclusions**:
-
-- Within each experiment condition individual subject performance is worse when engaged in secondary task
-
-### Within Subject Performance Differences by Condition
-
-```{r, echo = FALSE}
-df2 <- separate(df, col = DosingLevel, into = c("THC_Condition","ALC_Condition"), sep = -1)
-
-
-
-p1 <- ggplot(df2, aes(x = factor(SubjectID), y = diff_SD_lane_pos, color = THC_Condition, pch = ALC_Condition, text = paste("CTRL speed:", round(speed_ctrl,2), "<br> TASK speed:", round(speed_trt),2, "<br> Speed change:", round(diff_speed,2)))) + 
-  geom_point() + labs(x = "Subject ID", y = "Paired Difference in Std Lane Dev")
-ggplotly(p1, tooltip = "text")
-```
-
-**Conclusions**:
-
-- Some (but not all) of the instances where performance was better while engaged in the secondary task had slower speeds during the task
-- Difficult to gauge condition effects from this plot
-
-## Tables
-
-Secondary task segments available for analysis for each of the 19 subjects:
+Artist/Menu task segments available for analysis for each of the 19 subjects:
 
 ```{r, echo = FALSE}
 tab1 <- table(df$SubjectID, df$DosingLevel)
@@ -106,6 +76,78 @@ kable(tab1)
 
 - 19 subjects, only 2 missing events
 
+## Visuals
+
+We found that total time (from task available to complete) is longer as participant experience more task.
+```{r, echo = FALSE}
+eventTimesByInstance <- group_by(eventTimes, eventNum)
+ggplot(eventTimes, aes(x = eventNum, y = total)) + geom_boxplot()
+
+summarize(eventTimesByInstance, 
+          min = min(total, na.rm = TRUE), 
+          Q1 = quantile(total, .25, na.rm = TRUE), 
+          median = median(total, na.rm = TRUE), 
+          Q3 = quantile(total, .75, na.rm = TRUE), 
+          max = max(total, na.rm = TRUE))
+```
+
+Standard deviation of lane deviation by dosage group and secondary task engagement:
+
+```{r, echo = FALSE}
+ggplot(data = d3cp, aes(x = SD.Lane.Deviation, fill = factor(Experiment))) + geom_density(alpha = .5) + facet_wrap( ~ DosingLevel) + labs(fill = "Secondary Task", title = "Engagement via Changepoint Detection")
+ggplot(data = d3n, aes(x = SD.Lane.Deviation, fill = factor(Experiment))) + geom_density(alpha = .5) + facet_wrap( ~ DosingLevel) + labs(fill = "Secondary Task", title = "No Changepoint Detection")
+```
+
+**Conclusions**:
+
+- Not much difference when deriving engagement segment using changepoint detection vs. using entire period task is available
+- We can still analyze the data both ways, but will use the changepoint detection approach for now
+
+Boxplot version:
+
+```{r, echo = FALSE}
+ggplot(d3cp, aes(x = DosingLevel, y = SD.Lane.Deviation, color = factor(Experiment))) + geom_boxplot() + labs(color = "Secondary Task", title = "Engagement via Changepoint Detection")
+```
+
+**Conclusions**:
+
+- Standard Deviation of Lane Deviation is much higher when engaged in secondary task (artist-menu search)
+- Similar differences across experimental conditions
+- This visual ignores pairing of segments/participants
+
+### Paired (trt/control) version:
+
+```{r, echo = FALSE}
+diff <- d3cp[d3cp$Experiment == 1, ]$SD.Lane.Deviation - d3cp[d3cp$Experiment == 0, ]$SD.Lane.Deviation
+diff_speed <- d3cp[d3cp$Experiment == 1, ]$Avg.Speed - d3cp[d3cp$Experiment == 0, ]$Avg.Speed
+speed_ctrl <- d3cp[d3cp$Experiment == 0, ]$Avg.Speed
+speed_trt <- d3cp[d3cp$Experiment == 1, ]$Avg.Speed 
+df <- data.frame(diff_speed = diff_speed, diff_SD_lane_pos = diff, 
+                 DosingLevel = d3cp[d3cp$Experiment == 1, ]$DosingLevel,
+                 SubjectID = d3cp[d3cp$Experiment == 1, ]$ID,
+                 EventID = d3cp[d3cp$Experiment == 1, ]$eventNum)
+ggplot(df, aes(x = DosingLevel, y = diff_SD_lane_pos)) + geom_boxplot(outlier.shape = NA) + geom_jitter(width = .15) + geom_abline(intercept = 0, slope = 0, lty = "dashed") + labs(y = "Paired within subject difference")
+```
+
+**Conclusions**:
+
+- Within each experiment condition individual subject performance is worse when engaged in secondary task
+
+### Within Subject Performance Differences by Condition
+
+```{r, echo = FALSE}
+df2 <- separate(df, col = DosingLevel, into = c("THC_Condition","ALC_Condition"), sep = -1)
+p1 <- ggplot(df2, aes(x = factor(SubjectID), y = diff_SD_lane_pos, color = THC_Condition, pch = ALC_Condition, text = paste("CTRL speed:", round(speed_ctrl,2), "<br> TASK speed:", round(speed_trt),2, "<br> Speed change:", round(diff_speed,2)))) + 
+  geom_point() + labs(x = "Subject ID", y = "Paired Difference in Std Lane Dev")
+ggplotly(p1, tooltip = "text")
+```
+
+**Conclusions**:
+
+- Some (but not all) of the instances where performance was better while engaged in the secondary task had slower speeds during the task
+- Difficult to gauge condition effects from this plot
+
+## Tables
 ### Marginal Statistics
 
 Marginally, there is a statistically significant effect of secondary task engagement (for most Dose/Event combos) on standard deviation of lane deviation (p-values are from paired t-tests within subject/event):
@@ -115,7 +157,6 @@ res <- df %>% group_by(DosingLevel, EventID) %>% summarize(mean_SDL = mean(diff_
                                                            sd_SDL = sd(diff_SD_lane_pos), n = n(),
                                            p_value = pmin(1,round(2*pnorm(-abs(mean(diff_SD_lane_pos))/
                                                                      (sd(diff_SD_lane_pos)/sqrt(n()))), 5)))
-
 signif <- function(inp){
                 if(inp >= .1) " "
                 else if (inp < .1 & inp >= .05) "."
@@ -123,9 +164,7 @@ signif <- function(inp){
                 else if (inp< .01 & inp >= .001) "**"
                 else if (inp< .001) "***"
 }
-
 res$signif <- apply(matrix(res$p_value, ncol = 1), 1, signif)
-
 kable(res)
 ```
 
@@ -138,10 +177,8 @@ if(subj_ids[i] != 21 & subj_ids[i] != 123){
 wide_df <- rbind(wide_df, spread(temp,key = DosingLevel, value = diff_SD_lane_pos))
 }
 }
-
 with(filter(wide_df, EventID ==1), t.test(XM, XP, paired = TRUE))
 with(filter(wide_df, EventID ==1), t.test(XM, YM, paired = TRUE))
-
 ```
 
 ## Models
@@ -159,7 +196,6 @@ $$y_{ij} = \beta_0 + \gamma_i + \beta_1 SecTask_{ij} + \beta_2 DoseXM_{ij} + \be
 ```{r}
 d3cp$Dose_Grp <- relevel(d3cp$DosingLevel, ref = "ZP")
 fit <- lmer(data = d3cp, SD.Lane.Deviation ~ Dose_Grp +  Experiment  + (1 | ID))
-
 fit_sum <- summary(fit)
 kable(round(fit_sum$coefficients, 4))
 kable(round(anova(fit), 4))
@@ -181,7 +217,6 @@ kable(round(anova(fit), 4))
 ```{r}
 fit <- lmer(data = d3cp, log2(SD.Lane.Deviation) ~ relevel(DosingLevel, ref = "XM") + 
               factor(eventNum)  + Avg.Speed + Experiment + (1 | ID))
-
 kable(round(summary(fit)$coefficients, 4))
 kable(round(anova(fit), 4))
 ```
