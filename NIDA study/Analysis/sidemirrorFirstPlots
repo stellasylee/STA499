@@ -1,0 +1,39 @@
+install.packages("readxl")
+install.packages("tidyverse")
+install.packages("foreach")
+install.packages("changepoint")
+
+library(changepoint)
+library(rio)
+library(stringr) # String manipulation
+library(readxl) 
+library(dplyr)
+library(stringr) # String manipulation
+library(tidyverse)
+
+install.packages("plotly")
+library(plotly)
+
+#importing mirror task analysis matrix and event times
+
+analysisMatrixmirror <- read.csv("H:\\CannabisStudy\\analysisMatrixmirror.csv")
+eventTimesmirror <- read.csv("H:\\CannabisStudy\\eventTimesmirror.csv")
+
+head(analysisMatrixmirror)
+
+head(eventTimesmirror)
+
+#boxplot for dosinglevel and Sd lane deviation
+ggplot(analysisMatrixmirror, aes(x=DosingLevel, y=SdLanemirror)) + geom_boxplot()
+
+##boxplot for dosinglevel and avg speed mirror
+ggplot(analysisMatrixmirror, aes(x=DosingLevel, y=avgSpeedmirror)) + geom_boxplot()
+
+##boxplot for dosinglevel and sd speed
+ggplot(analysisMatrixmirror, aes(x=DosingLevel, y=sdSpeedmirror)) + geom_boxplot()
+
+#grouping data by dosing level
+
+groupeddosing <- dplyr::group_by(analysisMatrixmirror, DosingLevel)
+
+ggplot(groupeddosing, aes(x = as.character(experiment), y=SdLanemirror)) + geom_boxplot()
