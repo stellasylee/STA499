@@ -18,12 +18,16 @@ library(changepoint)
 
 ```{r, echo = FALSE}
 # Load data
+# Artist Task ----
 ## Event time data
 eventTimes <- read.csv("H:\\NIDA\\eventTimesWith3.csv")
 eventTimes$eventNum <- as.factor (eventTimes$eventNum)
 ## Output variables for analysis
 d3cp <- read.csv("H:\\NIDA\\AnalysisTasks3.csv")
 d3n <- read.csv("H:\\NIDA\\AnalysisTasksNoEngage3.csv")
+# Side Mirror Task ----
+eventTimesM <- read.csv("H:\\NIDA\\eventTimesMirror.csv")
+analysisM <- read.csv("H:\\NIDA\\analysisMirror.csv")
 ```
 
 ## Cleaning Data
@@ -109,7 +113,7 @@ ggplot(data = tempSimuation, aes(x = as.numeric(row.names(tempSimuation)))) +
 Start of experiment group: 
 using task availabe time: ![](H:\\start.png) 
 
-using predicted engagement time: ![](H:\\engagement.png) 
+using predictedengagement time: ![](H:\\engagement.png) 
 
 ## Visuals
 
@@ -317,3 +321,15 @@ kable(round(anova(fit),4))
 - Dosing condition has a highly significant impact on participant speed
 - Secondary task engagement doesn't predict speed
 - No interaction between dosing and secondary task engagment (model testing this not shown, p > .9)
+
+## Side Mirror Task
+```{r, echo = FALSE}
+#table showing the number of event for each participant by dosing level (excludes the ones that timed out)
+tab1 <- table(eventTimesM$ID, eventTimesM$DosingLevel)
+rownames(tab1) <- paste("Subject ID", rownames(tab1))
+tab1 <- addmargins(tab1)
+kable(tab1)
+
+#time taken for task by dosing level
+ggplot(eventTimesM, aes(x = DosingLevel, y = total)) + geom_boxplot()
+```
