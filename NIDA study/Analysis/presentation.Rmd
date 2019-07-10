@@ -109,7 +109,7 @@ ggplot(data = tempSimuation, aes(x = as.numeric(row.names(tempSimuation)))) +
 Start of experiment group: 
 using task availabe time: ![](H:\\start.png) 
 
-using predictedengagement time: ![](H:\\engagement.png) 
+using predicted engagement time: ![](H:\\engagement.png) 
 
 ## Visuals
 
