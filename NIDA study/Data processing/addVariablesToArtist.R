@@ -1,3 +1,4 @@
+
 library(stringr)
 library(tidyverse)
 library ("readxl")
@@ -16,7 +17,7 @@ newDisp <- left_join(x = disp, y = dosingF, by = c("ID","Visit"))
 
 fileNames <- times$DaqName
 
-## Add variable for page number and valid (not time-out), dosing level at task time
+## Add variable for page number, valid (not time-out), dosing level at task time, and LogStream information
 times[,"pageNum"] <- NA
 outputs[,"pageNum"] <- NA
 times[,"valid"] <- NA
@@ -27,39 +28,39 @@ times[,"BAC"] <- NA
 outputs[,"BAC"] <- NA
 times[,"LogStreams.5"] <- NA
 outputs[,"LogStreams.5"] <- NA
-j <- 1
+
+j <- 1 # index for writing output file
 for (i in 1:length(fileNames)){
   file <- read.csv(paste0("H:\\NIDA\\ReducedCSV\\", fileNames[i]))
   start <- times$start[i]
   end <- times$end[i]
   print (paste0(start, " ", end))
-  # Add corresponding page number by MenuSearch value
+  # Corresponding page number (location of answer) by MenuSearch value
   ## 13:15 is not present in simulation
   page <-  switch(file$SCC.MenuSearch[start],
                   1, 2, 3, 1, 2, 3, 2, 2, 2, 1, 1, 3,
                   -1, -1, -1, 1, 2, 3, 1, 1, 2)
+  
   # Find the task was valid
   if (file$AUX1.MenuScore[end] == 1){
     v <- 1
-  }else v <- 0
+  }else v <- 0 # if MenuScore == 2: task was timed out
   
-  # Find appropriate dosing level
-  place <- file$SCC.LogStreams.5[start]
-  
-  # Find position in disposition file
-  doingInfo <- newDisp [which(newDisp$ID == f$ID[i]),] %>% .[which(.$Visit == f$Visit[i]),17:24]
+  # Find appropriate dosing condition for data
+  place <- file$SCC.LogStreams.5[start] # LogStream information 
+  dosingInfo <- newDisp [which(newDisp$ID == file$ID[i]),] %>% .[which(.$Visit == file$Visit[i]), 17:24]
   if (place %in% 11:14){ # urban segment
-    cannabis <- doingInfo$THC_Urban[1]
-    alcohol <- doingInfo$BAC_Urban[1]
+    cannabis <- dosingInfo$THC_Urban[1]
+    alcohol <- dosingInfo$BAC_Urban[1]
   }else if (place %in% 21:23){ # interstate
-    cannabis <- doingInfo$THC_Interstate[1]
-    alcohol <- doingInfo$BAC_Interstate[1]
+    cannabis <- dosingInfo$THC_Interstate[1]
+    alcohol <- dosingInfo$BAC_Interstate[1]
   }else if (place %in% 31:35){ # rural
-    cannabis <- doingInfo$THC_Rural[1]
-    alcohol <- doingInfo$BAC_Rural[1]
+    cannabis <- dosingInfo$THC_Rural[1]
+    alcohol <- dosingInfo$BAC_Rural[1]
   }else if (place == 36){ # rural straight
-    cannabis <- doingInfo$THC_RuralStraight[1]
-    alcohol <- doingInfo$BAC_RuralStraight[1]
+    cannabis <- dosingInfo$THC_RuralStraight[1]
+    alcohol <- dosingInfo$BAC_RuralStraight[1]
   }else print(fileNames[i]) # error 
   
   times <- assignValues(times, i, page, v, place, cannabis, alcohol)
@@ -76,3 +77,7 @@ assignValues <- function(df, i, page, v, place, cannabis, alcohol){
   df[i, "BAC"] <- alcohol
   return (df)
 }
+
+write.csv(times, file = "H:\\NIDA\\validArtistTimes.csv", row.names=FALSE)
+write.csv(outputs, file = "H:\\NIDA\\validAnalysisArtist.csv", row.names=FALSE)
+write.csv(newDisp, file = "H:\\NIDA\\dispWithDosing.csv", row.names=FALSE)
