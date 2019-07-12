@@ -48,7 +48,7 @@ for (i in 1:length(fileNames)){
   
   # Find appropriate dosing condition for data
   place <- file$SCC.LogStreams.5[start] # LogStream information 
-  dosingInfo <- newDisp [which(newDisp$ID == file$ID[i]),] %>% .[which(.$Visit == file$Visit[i]), 17:24]
+  dosingInfo <- newDisp [which(newDisp$ID == file$ID[1]),] %>% .[which(.$Visit == file$Visit[1]), 17:24]
   if (place %in% 11:14){ # urban segment
     cannabis <- dosingInfo$THC_Urban[1]
     alcohol <- dosingInfo$BAC_Urban[1]
