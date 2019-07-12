@@ -1,0 +1,59 @@
+---
+title: "Analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## Artist Menu Task
+
+### Task Completition
+
+```{r}
+library(dplyr)
+library(knitr)
+library(lmerTest)
+data <- read.csv("C:\\Users\\millerry\\Downloads\\ArtistMenuAnalysis.csv")
+data2 <- filter(data, Experiment == 1)
+
+library(lme4)
+## Fit a mixed effects logistic regression model
+## Outcome is whether subject failed to complete a task
+fit <- glmer((valid == 0) ~ BAC + THC + factor(pageNum)  + (1 | ID), data = data2, family = "binomial")
+kable(round(summary(fit)$coefficients, 4))
+
+## Odds ratios and their 95% CIs
+coefs <- summary(fit)$coefficients[,1]
+ses <- summary(fit)$coefficients[,2]
+kable(round(exp(data.frame(OR = coefs, LCL = coefs - 1.96*ses, UCL = coefs + 1.96*ses)), 4))
+```
+
+**Conclusions**:
+
+- `PageNum` is extremely important, later pages = more likely not to complete the task
+- `THC` is statistically significant, each 1% increase in blood THC leads to 6% increased odds of not completing a task (controlling for PageNum)
+
+### Performance During Completed Tasks
+
+```{r}
+## Select control segments and valid experimental segments
+data3 <- filter(data, (Experiment == 1 & valid == 1) | Experiment == 0)
+
+table(data$valid, data$ID)
+
+fit <- lmer(SD.Lane.Deviation ~ Experiment +  BAC + THC + Avg.Speed  +  (1| ID), data = data3)
+
+#fit <- lmer(SD.Lane.Deviation ~ Experiment +  BAC + THC + Avg.Speed + THC:Experiment +  (1 | ID), data = data3)
+#fit <- lmer(SD.Lane.Deviation ~ Experiment +  BAC + THC + Avg.Speed + BAC:Experiment +  (1 | ID), data = data3)
+kable(round(summary(fit)$coefficients, 4))
+```
+
+**Conclusions**:
+
+- Engagement in a Secondary Task significantly increases SD Lane Deviation
+- Avg.Speed is another important predictor
+- After adjusting for speed, neither THC or BAC modify the effect of Secondary Task Engagement on SD Lane Deviation
+
+
