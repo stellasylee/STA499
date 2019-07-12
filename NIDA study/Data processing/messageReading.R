@@ -7,12 +7,12 @@ library(tidyverse)
 #writing function to detect the start and event of side mirror task
 messageDetect <- function (file, s, scenario, eventNum){
   scen <- switch(scenario,
-                    c(5, 2, 3, 4, 6, 1), #S1A
-                    c(7, 10, 8, 9, 12, 11), #S1B
-                    c(19, 20, 21, 22, 24, 23), #S2A
-                    c(13, 14, 15, 16, 17, 18), #S2B
-                    c(25, 29, 26, 28, 27, 30), #S3A
-                    c(35, 32, 31, 34, 33, 36)) #S3B
+                 c(5, 2, 3, 4, 6, 1), #S1A
+                 c(7, 10, 8, 9, 12, 11), #S1B
+                 c(19, 20, 21, 22, 24, 23), #S2A
+                 c(13, 14, 15, 16, 17, 18), #S2B
+                 c(25, 29, 26, 28, 27, 30), #S3A
+                 c(35, 32, 31, 34, 33, 36)) #S3B
   correct <- scen[eventNum]
   print(correct)
   for (start in s:nrow(file)) {
@@ -47,38 +47,39 @@ fileNames <- disp$DaqName
 eventTimesMes <- NULL
 #finding start engagement and end for all the files and storing it
 eventR <- 1
-for (i in 7:10){
+for (i in 1:length(fileNames)){
   file <- read.csv(paste0("H:\\NIDA\\SideMirrorCSV\\", fileNames[i]))
   done <- TRUE
-  for (eventNum in 1:6){
-    print (paste0( eventNum, ":"))
+  eventNum <- 1
+  while (eventNum <= 6){
     if (done){
-    start <- 1 
-    if (eventNum != 1){
-      start <- end + 1
+      start <- 1 
+      if (eventNum != 1){
+        start <- end + 1
+      }
+      scen <- switch (disp$Drive[i], "S1A" = {1}, "S1B" = {2}, "S2A" = {3}, "S2B" = {4}, "S3A" = {5}, "S3B" = {6})
+      if ((eventNum == 1) & (disp$Restart[i] != "RNA")) { # Restart file
+        eventNum <- (1 + as.numeric(as.character(eventTimesMes$'X.1.'[(eventR - 1)])))
+        if (eventNum > 6){
+          break
+        }
+      }
+      times <- messageDetect(file, start, scen, eventNum)
+      if (times[1] == FALSE){
+        done <- FALSE
+      }else { # valid message reading task
+        start <- times[1]
+        end <- times [2]
+        messageVal <- times[3]
+        engage <- messageEngagement(file, start, end)
+        eventTimesMes <- rbind.data.frame(eventTimesMes,
+                                          c(disp$ID[i], as.character(fileNames[i]), as.character(disp$DosingLevel[i]),
+                                            eventNum, messageVal, start, (start+engage), end, (end-start)),
+                                          stringsAsFactors = FALSE)
+        eventR <- eventR + 1
+      }
     }
-    scen <- switch (disp$Drive[i], "S1A" = {1}, "S1B" = {2}, "S2A" = {3}, "S2B" = {4}, "S3A" = {5}, "S3B" = {6})
-    if ((eventNum == 1) & (disp$Restart[i] != "RNA")) { # Restart file
-      eventNum <- (1 + as.numeric(as.character(eventTimesMes$'X.1.'[(eventR - 1)])))
-      print (paste0(eventR, " :::::::", eventNum))
-    }
-    times <- messageDetect(file, start, scen, eventNum)
-    if (times[1] == FALSE){
-      done <- FALSE
-    }else { # valid message reading task
-      start <- times[1]
-      end <- times [2]
-      messageVal <- times[3]
-      engage <- messageEngagement(file, start, end)
-      eventTimesMes <- rbind.data.frame(eventTimesMes,
-                                        c(disp$ID[i], as.character(fileNames[i]), as.character(disp$DosingLevel[i]),
-                                          eventNum, messageVal, start, (start+engage), end, (end-start)),
-                                        stringsAsFactors = FALSE)
-      eventR <- eventR + 1
-    }
-    print (paste0(eventR, " after setting", eventNum))
     eventNum <- eventNum + 1
-    }
   }
 }
 
@@ -196,10 +197,3 @@ analysisMatrixMesCP$Avg.Speed <- as.numeric(as.character(analysisMatrixMesCP$Avg
 analysisMatrixMesCP$Sd.Speed <- as.numeric(as.character(analysisMatrixMesCP$Sd.Speed))
 analysisMatrixMesCP <- analysisMatrixMesCP[order(analysisMatrixMesCP$ID, analysisMatrixMesCP$DosingLevel),]
 write.csv(analysisMatrixmirror, file = "H:\\NIDA\\analysisMesCP.csv", row.names=FALSE)
-
-for (i in 1:6){
-  if (i == 3){
-    i <- 5
-  }
-  print (i)
-}
