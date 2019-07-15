@@ -1,4 +1,3 @@
-
 library(stringr)
 library(tidyverse)
 library ("readxl")
@@ -9,7 +8,7 @@ times <- times[-which(times$DaqName %in% c("20130612092744.csv", "20140104105417
 outputs <- read.csv("H:\\NIDA\\analysisTasks3.csv")
 dosing <- read.csv("H:\\NIDA\\DosingLevelNIDA.csv")
 
-# Join correct dosing levels to disposition file
+# Join correct dosing levels to disposition file ----
 dosingF <- dosing [, -(5:41)]
 colnames(dosingF)[1] <- "ID"
 disp <- read.csv("H:\\NIDA\\dispositionUpdate.csv")
@@ -17,7 +16,7 @@ newDisp <- left_join(x = disp, y = dosingF, by = c("ID","Visit"))
 
 fileNames <- times$DaqName
 
-## Add variable for page number, valid (not time-out), dosing level at task time, and LogStream information
+## Add variable for page number, valid (not time-out), dosing level at task time, and LogStream information ----
 times[,"pageNum"] <- NA
 outputs[,"pageNum"] <- NA
 times[,"valid"] <- NA
@@ -81,3 +80,48 @@ assignValues <- function(df, i, page, v, place, cannabis, alcohol){
 write.csv(times, file = "H:\\NIDA\\validArtistTimes.csv", row.names=FALSE)
 write.csv(outputs, file = "H:\\NIDA\\validAnalysisArtist.csv", row.names=FALSE)
 write.csv(newDisp, file = "H:\\NIDA\\dispWithDosing.csv", row.names=FALSE)
+
+# Add variables to indicate if there were incorrect in the middle of task (whether it was invalid or not) ----
+times <- read.csv("H:\\NIDA\\validArtistTimes.csv")
+outputs <- read.csv("H:\\NIDA\\validAnalysisArtist.csv")
+fileNames <- times$DaqName
+
+j <- 1 # index for writing output file
+#for (i in 1:length(fileNames)){
+for (i in 21:length(fileNames)){
+  file <- read.csv(paste0("H:\\NIDA\\ReducedCSV\\", fileNames[i]))
+  start <- times$start[i]
+  end <- times$end[i]
+  print (paste0(start, " ", end))
+  where <- NA
+  for (curr in start:end){
+    if (file$AUX1.MenuScore[curr] == -1){
+      break
+    }
+  }
+  if (curr == end){
+    wrong <- 0
+  }else {
+    wrong <- 1
+    where <- curr
+  }
+  times <- assignIncorrect(times, i, wrong, where)
+  outputs <- assignIncorrect(outputs, j, wrong, where)
+  outputs <- assignIncorrect(outputs, j+1, wrong, where)
+  j <- j + 2
+}
+
+#' assignIncorrect
+#' assigns variables to data frame
+#' @param df dataframe 
+#' @param i rownumber to add the value
+#' @param wrong 0 when participant was not having incorrect value in the middle, 1 if participant was incoorect
+#' @param where the location where participant was wrong (NA if it's not applicable)
+assignIncorrect <- function(df, i, wrong, where){
+  df[i,"incorrect"] <- wrong
+  df[i,"incorrectPos"] <- where
+  return (df)
+}
+
+write.csv(times, file = "H:\\NIDA\\artistTimes.csv", row.names=FALSE)
+write.csv(outputs, file = "H:\\NIDA\\analysisArtist.csv", row.names=FALSE)
