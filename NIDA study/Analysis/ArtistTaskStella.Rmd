@@ -1,0 +1,48 @@
+---
+title: "Analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(ggplot2)
+library(gridExtra)
+library(lme4)
+library(lmerTest)
+library(dplyr)
+library(tidyr)
+library(knitr)
+library(plotly)
+library(changepoint)
+```
+
+```{r, echo = FALSE}
+# Load data
+artist <- read.csv ("H:\\NIDA\\Artist\\analysisArtist.csv")
+artistT <- read.csv ("H:\\NIDA\\Artist\\artistTimes.csv")
+validArtist <- filter(artist, valid == 1)
+engageArtist <- filter (artist, !((valid == 0) & (incorrect == 0)))
+```
+
+## Distribution:
+
+```{r, echo = FALSE}
+table (artist$valid, artist$incorrect)
+
+prop.table(table (validArtist$DosingLevel, validArtist$incorrect), margin = 1)
+```
+
+```{r}
+## Fit a mixed effects logistic regression model
+## Outcome is whether subject failed to complete a task
+fit <- glmer((valid == 0) ~ BAC + THC + factor(pageNum)  + (1 | ID), data = artist, family = "binomial")
+summary(fit)
+
+fit <- glmer((incorrect == 0) ~ BAC + THC + factor(pageNum)  + (1 | ID), data = artist, family = "binomial")
+summary(fit)
+```
+
+```{r}
+fit <- lmer(SD.Lane.Deviation ~ factor(Experiment) +  BAC + THC + Avg.Speed  +  (1| ID), data = engageArtist)
+summary (fit)
+```
