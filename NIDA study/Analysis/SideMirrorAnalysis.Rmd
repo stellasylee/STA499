@@ -1,0 +1,70 @@
+---
+title: "Side Mirror"
+author: "Stella Lee"
+date: "July 16, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(ggplot2)
+library(gridExtra)
+library(lme4)
+library(lmerTest)
+library(dplyr)
+library(tidyr)
+library(knitr)
+library(plotly)
+library(changepoint)
+```
+
+```{r, echo = FALSE}
+# Load data
+mirrorTime <- read.csv ("H:\\NIDA\\mirrorTimes.csv")
+mirrorTime <- dplyr::filter (mirrorTime, total <= 300)
+```
+
+```{r}
+table(mirrorTime$valid, mirrorTime$DosingLevel)
+prop.table(table(mirrorTime$valid))
+prop.table(table(mirrorTime$DosingLevel, mirrorTime$valid), 1)
+
+## Fit a mixed effects logistic regression model
+## Outcome is whether subject failed to complete a task
+fit <- glm((valid == 0) ~ BAC + THC, data = mirrorTime, family = "binomial")
+summary(fit)
+# both (BAC and THC) not significant
+
+fit <- glmer((valid == 0) ~ BAC + THC + (1 | ID) + factor(eventNum), data = mirrorTime, family = "binomial")
+summary(fit)
+anova(fit)
+# THC = 0.04836 * BAC = 0.09770 .
+
+```
+
+## Change 299 frame to invalid
+```{r}
+# Coefficients????? 
+changedTime <- mirrorTime
+changedTime$valid<-ifelse(changedTime$total == 299, 0, changedTime$valid)
+table(changedTime$valid, changedTime$DosingLevel)
+prop.table(table(changedTime$valid))
+prop.table(table(changedTime$DosingLevel, changedTime$valid), 1)
+
+fit <- glm((valid == 0) ~ DosingLevel, data = changedTime, family = "binomial")
+summary (fit)
+fit <- glm((valid == 0) ~ BAC + THC, data = changedTime, family = "binomial")
+summary(fit)
+# THC = 0.0428 BAC = 0.0718
+
+fit <- glmer((valid == 0) ~ BAC + THC + (1 | ID) + factor(eventNum), data = changedTime, family = "binomial")
+fit <- glmer(valid ~ BAC + THC + (1 | ID) + factor(eventNum), data = changedTime, family = "binomial")
+summary(fit)
+anova(fit)
+summary(fit)
+kable(round(summary(fit)$coefficients, 4))
+coefs <- summary(fit)$coefficients[,1]
+ses <- summary(fit)$coefficients[,2]
+kable(round(exp(data.frame(OR = coefs, LCL = coefs - 1.96*ses, UCL = coefs + 1.96*ses)), 4))
+# BAC = 0.04841  THC =  0.01469
+```
