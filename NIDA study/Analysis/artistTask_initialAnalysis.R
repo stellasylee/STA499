@@ -46,7 +46,7 @@ fit <- lmer(data = keepingengagement, Avg.Speed ~ (1 | ID) + Experiment + Dosing
 summary(fit)
 
 #modelling keepingengagment data with avg speed as a predictor with THC and BAC
-fit <- lmer(data = keepingengagement, Avg.Speed ~ (1 | ID) + Experiment + THC + BAC + pageNum)
+fit <- lmer(data = keepingengagement, Avg.Speed ~ (1 | ID) + Experiment + THC + BAC +  pageNum)
 summary(fit)
 #THC and BAC are not good predictors here
 
@@ -79,9 +79,6 @@ plot(validArtist$BAC, resid(fit),    ylab="Residuals", xlab="BAC", main="Valid A
 plot(validArtist$Avg.Speed, resid(fit),    ylab="Residuals", xlab="Avg.Speed", main="Valid Artist Task") + abline(0,0)
 plot(validArtist$pageNum, resid(fit),    ylab="Residuals", xlab="pageNum", main="Valid Artist Task") + abline(0,0)
 
-
-qqnorm(residuals(fit))
-
 #exploring other models
 
 fit <- lmer(data = validArtist,  Avg.Speed ~ (1 | ID) + Experiment + THC + BAC )
@@ -89,4 +86,6 @@ summary(fit)
 
 fit <- lmer(data = validArtist,  SD.Speed ~ (1 | ID) + Experiment + THC + BAC )
 summary(fit)
+
+
 
