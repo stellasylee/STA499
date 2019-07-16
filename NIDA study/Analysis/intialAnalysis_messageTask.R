@@ -23,32 +23,32 @@ summary(mesfit)
 #fitting a model
 #Model 1: SD lane dev as outcome and dosing level as predictor
 
-mesfit <- lmer(data = analysisMes, SD.Lane.Deviation ~ (1 | ID) + Experiment + DosingLevel + Avg.Speed + eventNum)
-summary(mesfit)
+mesfit <- lmer(data = analysisMes, SD.Lane.Deviation ~ (1 | ID) + Experiment + DosingLevel + Avg.Speed + factor(eventNum))
+anova(mesfit)
 
-#Model 2: using message instead of eventNum
+#Model 2: using message instead of eventNum XXX
 
-mesfit <- lmer(data = analysisMes, SD.Lane.Deviation ~ (1 | ID) + Experiment + DosingLevel + Avg.Speed + message)
-summary(mesfit)
+mesfit <- lmer(data = analysisMes, SD.Lane.Deviation ~ (1 | ID) + Experiment + DosingLevel + Avg.Speed + factor(message))
+anova(mesfit)
 
 #Model 3: using THC and BAC levels instead of Dosing Levels
 
-mesfit <- lmer(data = analysisMes, SD.Lane.Deviation ~ (1 | ID) + Experiment + THC + BAC + Avg.Speed + eventNum)
+mesfit <- lmer(data = analysisMes, SD.Lane.Deviation ~ (1 | ID) + Experiment + Experiment:BAC + THC + BAC + Avg.Speed + factor(eventNum))
 summary(mesfit)
 #experiment Avg. Speed and EventNum are significant predictors of SD lane dev
 
 
 #Model 4: using Avg Speed as an outcome
 
-mesfit <- lmer(data = analysisMes, Avg.Speed ~ (1 | ID) + Experiment + THC + BAC + eventNum)
+mesfit <- lmer(data = analysisMes, Avg.Speed ~ (1 | ID) + Experiment + THC + BAC +  factor(LogStreams.5))
 summary(mesfit)           
 #THC and eventNum are significant predictors of Avg Speed in this model
 
 #Model 5:
-mesfit <- lmer(data = analysisMes, Avg.Speed ~ (1 | ID) + Experiment + THC + BAC + message)
+mesfit <- lmer(data = analysisMes, Avg.Speed ~ (1 | ID) + Experiment + THC + BAC + factor(LogStreams.5))
 summary(mesfit)  
-#THC is an extremely good predictor of avg speed in this model
+#THC 
 
 #Model 6: using sp.speed as an outcome
-mesfit <- lmer(data = analysisMes,  Sd.Speed ~ (1 | ID) + Experiment + THC + BAC + eventNum)
+mesfit <- lmer(data = analysisMes,  Sd.Speed ~ (1 | ID) + Experiment + THC + BAC + factor(LogStreams.5))
 summary(mesfit)             
