@@ -1,0 +1,105 @@
+---
+title: "Message Reading"
+author: "Stella Lee"
+date: "July 16, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(ggplot2)
+library(gridExtra)
+library(lme4)
+library(lmerTest)
+library(dplyr)
+library(tidyr)
+library(knitr)
+library(plotly)
+```
+
+```{r, echo = FALSE}
+# Load data
+mes <- read.csv ("H:\\NIDA\\analysisMes.csv")
+```
+
+# Paired Difference
+
+```{r}
+messagePair <- mes[mes$Experiment == 1, c(1:6, 10:12)]
+colnames(mes)[9] <- "SD.Speed"
+for (i in 1:(nrow(mes)/2)){
+  lane <- mes$SD.Lane.Deviation[(2*i-1)] - mes$SD.Lane.Deviation[(2*i)]
+  speed <- mes$Avg.Speed[(2*i-1)] - mes$Avg.Speed[(2*i)]
+  sdspeed <- mes$SD.Speed[(2*i-1)] - mes$SD.Speed[(2*i)]
+  messagePair[i,"diffSDLane"] <- lane
+  messagePair[i,"diffAvgSpeed"] <- speed
+  messagePair[i,"diffSDSpeed"] <- sdspeed
+}
+
+completePair$road <- ifelse (completePair$LogStreams.5 <= 14, "urban", ifelse(completePair$LogStreams.5 <= 22, "interstate", "rural"))
+ggplot(completePair, aes(x = road, y = diffAvgSpeed)) + geom_boxplot(outlier.shape = NA) + geom_jitter(width = .15) + geom_abline(intercept = 0, slope = 0, lty = "dashed") + labs(y = "Paired within subject difference")
+```
+
+```{r}
+fit <- lmer(diffSDLane ~ BAC + THC + diffAvgSpeed  +  (1| ID) + factor(LogStreams.5), data = messagePair)
+summary(fit)
+anova(fit)
+# BAC is significant (p = 0.01035) with coefficient 2.058e+00
+# road segment is marginally significant
+
+fit <- lmer(diffAvgSpeed ~ BAC + THC + (1| ID) + factor(LogStreams.5), data = messagePair)
+summary(fit)
+anova(fit)
+# THC is significant (p = 0.038489) with coefficient **0.04018**
+# BAC is not significant
+
+fit <- lmer(diffSDSpeed ~ BAC + THC + (1| ID) + factor(LogStreams.5), data = messagePair)
+summary(fit)
+anova(fit)
+# THC and BAC not significant
+# road segment is also not significant
+```
+
+Adding eventNum 
+
+```{r}
+fit <- lmer(diffSDLane ~ BAC + THC + diffAvgSpeed  +  (1| ID) + factor(eventNum) + factor(LogStreams.5), data = messagePair)
+summary(fit)
+anova(fit)
+# BAC is significant (p = 0.00996) with coefficient 2.075e+00
+# road segment is marginally significant
+
+fit <- lmer(diffAvgSpeed ~ BAC + THC + (1| ID) + factor(eventNum) + factor(LogStreams.5), data = messagePair)
+summary(fit)
+anova(fit)
+# THC is significant (p = 0.0467) with coefficient **0.03851**
+# BAC is not significant
+
+fit <- lmer(diffSDSpeed ~ BAC + THC + (1| ID) + factor(eventNum) + factor(LogStreams.5), data = messagePair)
+summary(fit)
+anova(fit)
+# THC and BAC not significant
+# road segment is also not significant
+```
+
+Adding messageNum 
+
+```{r}
+fit <- lmer(diffSDLane ~ BAC + THC + diffAvgSpeed  +  (1| ID) + factor(message) + factor(LogStreams.5), data = messagePair)
+summary(fit)
+anova(fit)
+# THC and BAC not significant
+# message number is significant
+
+fit <- lmer(diffAvgSpeed ~ BAC + THC + (1| ID) + factor(message) + factor(LogStreams.5), data = messagePair)
+summary(fit)
+anova(fit)
+# THC is significant (p = 0.02594) with coefficient **0.04106**
+# BAC is not significant
+
+fit <- lmer(diffSDSpeed ~ BAC + THC + (1| ID) + factor(message) + factor(LogStreams.5), data = messagePair)
+summary(fit)
+anova(fit)
+# THC and BAC not significant
+# messageNum is significant
+```
