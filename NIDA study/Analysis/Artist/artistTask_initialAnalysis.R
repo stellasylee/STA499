@@ -10,6 +10,7 @@ library(dplyr)
 library(lme4)
 library(lmerTest)
 library(plotly)
+library(ggplot2)
 #reading in files
 
 AnalysisArtist <- read.csv("H:\\CannabisStudy\\artist\\artistTaskAnalysis.csv")
@@ -63,9 +64,10 @@ summary(fit)
 
 
 #modelling the data with filtered data to keep only valid artist
-fit <- lmer(data = validArtist, log(SD.Lane.Deviation) ~ (1 | ID) + Experiment + THC + BAC + Avg.Speed + (pageNum > 1))
+fit <- lmer(data = validArtist, log(SD.Lane.Deviation) ~ (1 | ID) + Experiment + (THC == 0) + THC  + BAC + Avg.Speed + (pageNum > 1))
 summary(fit)
 
+ggplot(validArtist, aes(x = log(THC+1), y = SD.Lane.Deviation, color = factor(Experiment))) + geom_point() + geom_smooth(method = "loess")
 
 #checking residual plots of this model
 
@@ -85,3 +87,4 @@ fit <- lmer(data = validArtist,  SD.Speed ~ (1 | ID) + Experiment +  THC + BAC +
 summary(fit)
 
 head(validArtist)
+
