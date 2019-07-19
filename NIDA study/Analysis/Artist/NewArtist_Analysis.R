@@ -40,9 +40,26 @@ fit <- lmer(data = ArtistExperiment, SD.Lane.Diff ~ (1 | ID) + THC + BAC + Avg.S
 summary(fit)
 
 #average speed
-fit <- lmer(data = ArtistExperiment, Avg.Speed.Diff ~ (1 | ID) + THC + BAC + factor(pageNum))
+fit <- lmer(data = ArtistExperiment, Avg.Speed.Diff ~ (1 | ID) + THC + BAC + factor(pageNum) + experimentallength)
 summary(fit)
 
 #SD Speed
-fit <- lmer(data = ArtistExperiment, SD.Speed.Diff ~ (1 | ID) + THC + BAC + Avg.Speed + factor(pageNum))
+fit <- lmer(data = ArtistExperiment, SD.Speed.Diff ~ (1 | ID) + THC + BAC + Avg.Speed + factor(pageNum) + experimentallength)
 summary(fit)
+
+#modelling the data with quantile regression with mixed effects
+
+#lane deviation
+mesfit <- lqmm(SD.Lane.Diff ~ THC + BAC + factor(pageNum) + Avg.Speed, random = ~ 1, group = ID, data = ArtistExperiment,
+               tau = 0.75)
+summary(mesfit)
+
+#Avg.Speed
+mesfit <- lqmm(Avg.Speed.Diff ~ THC + BAC + experimentallength + factor(pageNum), random = ~ 1, group = ID, data = ArtistExperiment,
+               tau = 0.75)
+summary(mesfit)
+
+#SD.Speed
+mesfit <- lqmm(SD.Speed.Diff ~ THC + BAC + experimentallength + factor(pageNum), random = ~ 1, group = ID, data = ArtistExperiment,
+               tau = 0.75)
+summary(mesfit)
