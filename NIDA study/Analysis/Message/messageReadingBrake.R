@@ -88,3 +88,19 @@ anova(fit)
 fit <- lmer(diffAvgSpeed ~ BAC + THC + (1| ID) + diffBrake + factor(LogStreams.5), data = messagePair)
 summary(fit)
 anova(fit)
+
+# Quantile Regression for Mixed Effect Linear Model
+library(lqmm)
+fit <- lqm(diffBrake ~ BAC + THC, data = messagePair, tau = 0.9)
+fit <- lqmm(diffBrake ~ BAC + THC + factor(LogStreams.5), random = ~ 1, group = ID,
+                  tau = 0.5, data = messagePair)
+
+fit <- lqmm(diffBrake ~ BAC + log(THC + 1) + Avg.Speed, random = ~ 1, group = ID,
+            tau = 0.8, data = messagePair, control = lqmmControl(LP_max_iter = 10000))
+
+library(MASS)
+
+boxcox(messagePair$diffBrake ~ 1)
+
+library("bestNormalize")
+bestNormalize::boxcox(messagePair$diffBrake)
