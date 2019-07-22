@@ -111,7 +111,7 @@ fit <- lqmm(Avg.Speed.Diff ~ (THC == 0) + THC + BAC + experimentallength + facto
             data = validArtist, tau = 0.5)
 summary(fit)
 
-#THC significant with positive coeffecient
+####THC significant with positive coeffecient####
 
 #two THC groups with mean
 
