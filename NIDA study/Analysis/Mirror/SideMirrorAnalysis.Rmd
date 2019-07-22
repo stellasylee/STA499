@@ -1,3 +1,4 @@
+    
 ---
 title: "Side Mirror"
 author: "Stella Lee"
@@ -15,6 +16,7 @@ library(dplyr)
 library(tidyr)
 library(knitr)
 library(plotly)
+library(changepoint)
 ```
 
 ```{r, echo = FALSE}
@@ -43,13 +45,15 @@ anova(fit)
 ```{r}
 normalMirror <- filter(mirror, ID != 123) # XP 100% incomplete, Visit 1
 prop.table(table(normalMirror$valid))
-prop.table(table(normalMirror$Visit, normalMirror$valid), 1)
+prop.table(table((normalMirror$Visit>1), normalMirror$valid), 1)
 length(table(normalMirror$ID))
+
 fit <- glm((valid == 0) ~ DosingLevel, data = normalMirror, family = "binomial")
 summary (fit)
 fit <- glm((valid == 0) ~ BAC + THC, data = normalMirror, family = "binomial")
 summary(fit)
-fit <- glmer((valid == 0) ~ BAC + THC + (1 | ID) + (Visit > 1), data = normalMirror, family = "binomial")
+
+fit <- glmer((valid == 0) ~ BAC + THC + BAC:THC + (1 | ID) + (Visit > 1), data = normalMirror, family = "binomial")
 fit <- glmer(valid ~ BAC + THC + (1 | ID) + factor(eventNum), data = normalMirror, family = "binomial")
 summary(fit)
 anova(fit)
@@ -71,7 +75,7 @@ summary(fit)
 
 Lane Deviation
 ```{r}
-fit <- lmer(SD.Lane.Deviation ~ factor(Experiment) +  BAC + THC + time + Avg.Speed  +  (1| ID) + factor (Visit) + factor(LogStreams.5), data = complete)
+fit <- lmer(SD.Lane.Deviation ~ factor(Experiment) +  BAC + THC + Avg.Speed  +  (1| ID) + factor (Visit) + factor(LogStreams.5), data = complete)
 # BAC
 summary (fit)
 anova(fit)
@@ -84,16 +88,22 @@ Avg Speed
 ```{r}
 fit <- lmer(Avg.Speed ~ factor(Experiment)  + BAC + THC + (1| ID) + factor (Visit) + factor(LogStreams.5), data = complete)
 fit <- lmer(Avg.Speed ~ factor(Experiment)  + BAC + THC + time + (1| ID) + factor (Visit) + factor(LogStreams.5), data = complete)
-# THC, BAC, THC:BAC marginally significant
-#summary (fit)
+# THC, BAC, 
+summary (fit)
 anova(fit)
+AIC(fit) # 19848.97
+
+fit <- lmer(Avg.Speed ~ factor(Experiment)  + BAC  + THC + BAC:THC +  (1| ID) + factor (Visit) + factor(LogStreams.5), data = complete)
+anova(fit)
+summary (fit) #THC:BAC significant
+AIC (fit) # 19840.62 
 ```
 
 SD Speed
 ```{r}
 fit <- lmer(SD.Speed ~ factor(Experiment) +  BAC + THC + BAC:THC + (1| ID) + time + factor (Visit) + factor(LogStreams.5), data = complete)
 # BAC
-#summary (fit)
+summary (fit)
 anova(fit)
 ```
 
@@ -109,27 +119,41 @@ for (i in 1:(nrow(complete)/2)){
   completePair[i,"diffAvgSpeed"] <- speed
   completePair[i,"diffSDSpeed"] <- sdspeed
 }
-
-completePair$road <- ifelse (completePair$LogStreams.5 <= 14, "urban", ifelse(completePair$LogStreams.5 <= 22, "interstate", "rural"))
-ggplot(completePair, aes(x = road, y = diffAvgSpeed)) + geom_boxplot(outlier.shape = NA) + geom_jitter(width = .15) + geom_abline(intercept = 0, slope = 0, lty = "dashed") + labs(y = "Paired within subject difference")
 ```
 
+# Plots
+
+```{r}
+completePair$road <- ifelse (completePair$LogStreams.5 <= 14, "urban", ifelse(completePair$LogStreams.5 <= 22, "interstate", "rural"))
+# Difference by road segments 
+ggplot(completePair, aes(x = road, y = diffSDLane)) + geom_boxplot(outlier.shape = NA) + geom_jitter(width = .15) + geom_abline(intercept = 0, slope = 0, lty = "dashed") + labs(y = "Paired within subject difference")
+ggplot(completePair, aes(x = road, y = diffAvgSpeed)) + geom_boxplot(outlier.shape = NA) + geom_jitter(width = .15) + geom_abline(intercept = 0, slope = 0, lty = "dashed") + labs(y = "Paired within subject difference")
+## Lane deviation is different in interstate
+
+# Difference in SD Lane Deviation
+ggplot(completePair, aes(x = (BAC > 0), y = diffSDLane)) + geom_boxplot(outlier.shape = NA) + geom_jitter(width = .15) + geom_abline(intercept = 0, slope = 0, lty = "dashed") + labs(y = "Paired within subject difference")
+
+# Difference in Avg speed 
+ggplot(completePair, aes(x = THC, y = diffAvgSpeed, color = road)) + geom_point()
+ggplot(completePair, aes(x = BAC, y = diffAvgSpeed, color = road)) + geom_point()
+```
+
+# Models
 ```{r}
 fit <- lmer(diffSDLane ~ BAC + THC + diffAvgSpeed  +  (1| ID) + factor (Visit) + factor(LogStreams.5), data = completePair)
 summary(fit)
 anova(fit)
 # THC and BAC not significant
 # difference in average speed and road segment is significant
-
 fit <- lmer(diffAvgSpeed ~ BAC + THC + (1| ID) + factor (Visit) + factor(LogStreams.5), data = completePair)
 summary(fit)
 anova(fit)
 # THC is significant (p = 0.008415) with coefficient -1.326e-02
 # BAC is not significant
-
-fit <- lmer(diffSDSpeed ~ BAC + THC + (1| ID) + factor (Visit) + factor(LogStreams.5), data = completePair)
+fit <- lmer(diffSDSpeed ~ BAC: THC + (1| ID) + factor (Visit) + factor(LogStreams.5), data = completePair)
 summary(fit)
 anova(fit)
 # THC and BAC not significant
 # difference in average speed and road segment is also not significant
+AIC(fit)
 ```
