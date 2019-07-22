@@ -63,3 +63,91 @@ summary(mesfit)
 mesfit <- lqmm(SD.Speed.Diff ~ THC + BAC + experimentallength + factor(pageNum), random = ~ 1, group = ID, data = ArtistExperiment,
                tau = 0.75)
 summary(mesfit)
+
+
+#modelling with median as well
+#Lane deviation with median
+fit <- lqmm(SD.Lane.Diff ~ THC + BAC + Avg.Speed + factor(pageNum), random = ~1, group = ID, 
+            data = ArtistExperiment, tau = 0.5)
+summary(fit)
+
+#Lane deviation with two THC groups with median
+
+fit <- lqmm(SD.Lane.Diff ~ (THC == 0) + THC + BAC + Avg.Speed + factor(pageNum), random = ~1, group = ID, 
+            data = ArtistExperiment, tau = 0.5)
+
+summary(fit)
+
+#Lane Deviation with two THC groups with mean
+
+fit <- lmer(data = ArtistExperiment, SD.Lane.Diff ~ (1 | ID) + (THC == 0) + THC + BAC + Avg.Speed + factor(pageNum))
+summary(fit)
+
+#Lane deviation with log(THC + 1) with mean
+fit <- lmer(data = ArtistExperiment, SD.Lane.Diff ~ (1 | ID) + log(THC + 1) + BAC + Avg.Speed + factor(pageNum))
+summary(fit)
+
+#Lane deviation with log(THC + 1 with median)
+fit <- lqmm(SD.Lane.Diff ~ log(THC + 1) + BAC + Avg.Speed + factor(pageNum), random = ~1, group = ID, 
+            data = ArtistExperiment, tau = 0.5)
+summary(fit)
+
+
+#Average speed
+
+#average speed with median
+
+fit <- lqmm(Avg.Speed.Diff ~ THC + BAC + experimentallength + factor(pageNum), random = ~1, group = ID, 
+            data = ArtistExperiment, tau = 0.5)
+summary(fit)
+
+#two THC groups with median
+
+fit <- lqmm(Avg.Speed.Diff ~ (THC == 0) + THC + BAC + experimentallength + factor(pageNum), random = ~1, group = ID, 
+            data = ArtistExperiment, tau = 0.5)
+summary(fit)
+
+#two THC groups with mean
+
+fit <- lmer(data = ArtistExperiment, Avg.Speed.Diff ~ (1 | ID) + (THC == 0) + THC + BAC + experimentallength + factor(pageNum))
+summary(fit)
+
+#Log(THC + 1 with mean)
+fit <- lmer(data = ArtistExperiment, Avg.Speed.Diff ~ (1 | ID) + log(THC + 1) + BAC + experimentallength + factor(pageNum))
+
+summary(fit)
+
+##Log(THC + 1 with median)
+
+fit <- lqmm(Avg.Speed.Diff ~ log(THC + 1) + BAC + experimentallength + factor(pageNum), random = ~1, group = ID, 
+            data = ArtistExperiment, tau = 0.5)
+summary(fit)
+
+#SD Speed 
+
+#SD speed with median
+
+fit <- lqmm(SD.Speed.Diff ~ THC + BAC + experimentallength + factor(pageNum), random = ~1, group = ID, 
+            data = ArtistExperiment, tau = 0.5)
+summary(fit)
+
+#two THC groups with median
+fit <- lqmm(SD.Speed.Diff ~ (THC == 0) + THC + BAC + experimentallength + factor(pageNum), random = ~1, group = ID, 
+            data = ArtistExperiment, tau = 0.5)
+summary(fit)
+
+#two THC groups with mean
+
+fit <- lmer(data = ArtistExperiment, SD.Speed.Diff ~ (1 | ID) + (THC == 0) + THC + BAC + experimentallength + factor(pageNum))
+summary(fit)
+
+#Log(THC + 1 with mean)
+fit <- lmer(data = ArtistExperiment, SD.Speed.Diff ~ (1 | ID) + log(THC + 1) + BAC + experimentallength + factor(pageNum))
+
+summary(fit)
+
+##Log(THC + 1 with median)
+
+fit <- lqmm(SD.Speed.Diff ~ log(THC + 1) + BAC + experimentallength + factor(pageNum), random = ~1, group = ID, 
+            data = ArtistExperiment, tau = 0.5)
+summary(fit)
