@@ -20,9 +20,9 @@ analysisMes <- read.csv("H:\\CannabisStudy\\message\\analysisMesBrake.csv")
 
 #filtering out and creating separate dataframes for experimental and control groups
 
-MessageExperiment <- filter(analysisMes, Experiment == "1" )
+MessageExperiment <- dplyr::filter(analysisMes, Experiment == "1" )
 
-MessageControl <- filter(analysisMes, Experiment == "0")
+MessageControl <- dplyr::filter(analysisMes, Experiment == "0")
 
 #sorting these dataframes to ensure that the the rows in both of them align
 
@@ -42,25 +42,36 @@ MessageExperiment <- mutate(MessageExperiment, SD.Lane.Diff = MessageExperiment$
 mesfit <- lmer(data = MessageExperiment, SD.Lane.Diff ~ (1 | ID) + THC + BAC + Avg.Speed + factor(LogStreams.5))
 summary(mesfit)
 
+### BAC is significant predictor of lane deviation####
+
 #Average Speed
 mesfit <- lmer(data = MessageExperiment, Avg.Speed.Diff ~ (1 | ID) + THC + BAC + factor(LogStreams.5)) 
 summary(mesfit)
+
+#### THC significant predictor with positive coefficient####
 
 #standard deviation speed
 mesfit <- lmer(data = MessageExperiment, SD.Speed.Diff ~ (1 | ID) + THC + BAC + factor(LogStreams.5)) 
 summary(mesfit)
 AIC(mesfit)
 
+#max brake force
+
+mesfit <- lmer(data = MessageExperiment, Break.Diff ~ (1 | ID) + THC + BAC + factor(LogStreams.5) + Avg.Speed) 
+summary(mesfit)
+
 #running mixed effects quantile regression
 #lane deviation
 mesfit <- lqmm(SD.Lane.Diff ~ THC + BAC + Avg.Speed + factor(LogStreams.5), random = ~ 1, group = ID, data = MessageExperiment,
                tau = 0.75)
 summary(mesfit)
+###### BAC significant predictor lane deviation#####
 
 #Avg Speed
 mesfit <- lqmm(Avg.Speed.Diff ~ THC + BAC + Avg.Speed + factor(LogStreams.5), random = ~ 1, group = ID, data = MessageExperiment,
                tau = 0.75)
 summary(mesfit)
+#### THC significant predictor with positive coefficient####
 
 #SD speed
 mesfit <- lqmm(SD.Speed.Diff ~ THC + BAC + Avg.Speed + factor(LogStreams.5), random = ~ 1, group = ID, data = MessageExperiment,
@@ -72,5 +83,79 @@ summary(mesfit)
 mesfit <- lqmm(Break.Diff ~ THC + BAC + Avg.Speed, random = ~ 1, group = ID, data = MessageExperiment,
                       tau = 0.75)
 summary(mesfit)               
-  
 
+
+#using median for quantile regression  
+#lane deviation
+mesfit <- lqmm(SD.Lane.Diff ~ THC + BAC + Avg.Speed + factor(LogStreams.5), random = ~ 1, group = ID, data = MessageExperiment,
+               tau = 0.5)
+summary(mesfit)
+###### BAC significant predictor lane deviation#####
+
+#Avg Speed
+mesfit <- lqmm(Avg.Speed.Diff ~ THC + BAC + Avg.Speed + factor(LogStreams.5), random = ~ 1, group = ID, data = MessageExperiment,
+               tau = 0.5)
+summary(mesfit)
+#### THC significant predictor with positive coefficient####
+
+#SD speed
+mesfit <- lqmm(SD.Speed.Diff ~ THC + BAC + Avg.Speed + factor(LogStreams.5), random = ~ 1, group = ID, data = MessageExperiment,
+               tau = 0.5)
+summary(mesfit)
+
+
+#max brake force
+mesfit <- lqmm(Break.Diff ~ THC + BAC + Avg.Speed, random = ~ 1, group = ID, data = MessageExperiment,
+               tau = 0.5)
+summary(mesfit)              
+
+
+
+#log transformed values of THC
+#lane deviation
+mesfit <- lqmm(SD.Lane.Diff ~ log(THC + 1) + BAC + Avg.Speed + factor(LogStreams.5), random = ~ 1, group = ID, data = MessageExperiment,
+               tau = 0.5)
+summary(mesfit)
+###### BAC significant predictor lane deviation#####
+
+#Avg Speed
+mesfit <- lqmm(Avg.Speed.Diff ~ log(THC + 1) + BAC + Avg.Speed + factor(LogStreams.5), random = ~ 1, group = ID, data = MessageExperiment,
+               tau = 0.5)
+summary(mesfit)
+
+#SD speed
+mesfit <- lqmm(SD.Speed.Diff ~ log(THC + 1) + BAC + Avg.Speed + factor(LogStreams.5), random = ~ 1, group = ID, data = MessageExperiment,
+               tau = 0.5)
+summary(mesfit)
+
+
+#max brake force
+mesfit <- lqmm(Break.Diff ~ log(THC + 1) + BAC + Avg.Speed, random = ~ 1, group = ID, data = MessageExperiment,
+               tau = 0.5)
+summary(mesfit)              
+
+
+#using multiple THC groups (THC = 0 + THC)
+
+#lane deviation
+mesfit <- lqmm(SD.Lane.Diff ~ (THC == 0) + THC + BAC + Avg.Speed + factor(LogStreams.5), random = ~ 1, group = ID, data = MessageExperiment,
+               tau = 0.5)
+summary(mesfit)
+###### BAC significant predictor lane deviation#####
+
+#Avg Speed
+mesfit <- lqmm(Avg.Speed.Diff ~ (THC == 0) + THC + BAC + Avg.Speed + factor(LogStreams.5), random = ~ 1, group = ID, data = MessageExperiment,
+               tau = 0.5)
+summary(mesfit)
+####### THC significant with positive coefficient#########
+
+#SD speed
+mesfit <- lqmm(SD.Speed.Diff ~ (THC == 0) + THC + BAC + Avg.Speed + factor(LogStreams.5), random = ~ 1, group = ID, data = MessageExperiment,
+               tau = 0.5)
+summary(mesfit)
+
+
+#max brake force
+mesfit <- lqmm(Break.Diff ~ (THC == 0) + THC + BAC + Avg.Speed, random = ~ 1, group = ID, data = MessageExperiment,
+               tau = 0.5)
+summary(mesfit)              
