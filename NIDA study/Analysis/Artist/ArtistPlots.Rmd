@@ -1,0 +1,125 @@
+---
+title: "Plots"
+author: "Stella Lee"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(ggplot2)
+library(gridExtra)
+library(lme4)
+library(lmerTest)
+library(dplyr)
+library(tidyr)
+library(knitr)
+library(plotly)
+```
+
+# Artist
+
+```{r, echo = FALSE}
+# Load data
+# This plots are using non engagement points!
+artist <- read.csv ("H:\\NIDA\\Artist\\analysisArtistNoEngage.csv")
+validArtist <- filter(artist, valid == 1)
+engageArtist <- filter (artist, !((valid == 0) & (incorrect == 0)))
+```
+
+## Every Artist Tasks
+```{r}
+ggplot(data = artist, aes (x = THC, y = SD.Lane.Deviation, color = Avg.Speed)) + geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') + geom_smooth()
+
+ggplot(data = artist, aes (x = THC, y = Avg.Speed, color = SD.Lane.Deviation)) + geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') + geom_smooth()
+
+ggplot(data = artist, aes (x = THC, y = SD.Speed, color = Avg.Speed)) + geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') + geom_smooth()
+```
+
+```{r}
+ggplot(data = artist, aes (x = THC, y = SD.Lane.Deviation, color = factor(Experiment))) + geom_point() + 
+  facet_wrap(~ ID, scales = 'free') + geom_smooth()
+
+ggplot(data = artist, aes (x = THC, y = Avg.Speed, color = Experiment)) + geom_point() + 
+  facet_wrap(~ ID, scales = 'free') + geom_smooth()
+
+ggplot(data = artist, aes (x = THC, y = SD.Speed, color = Experiment)) + geom_point() +
+  facet_wrap(~ ID, scales = 'free') + geom_smooth()
+```
+
+# Completed Tasks
+
+```{r}
+ggplot(data = validArtist, aes (x = THC, y = SD.Lane.Deviation, color = Avg.Speed)) + geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') + geom_smooth()
+
+ggplot(data = validArtist, aes (x = THC, y = Avg.Speed, color = SD.Lane.Deviation)) + geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') + geom_smooth()
+
+ggplot(data = validArtist, aes (x = THC, y = SD.Speed, color = Avg.Speed)) + geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') + geom_smooth()
+```
+
+```{r}
+ggplot(data = validArtist, aes (x = THC, y = SD.Lane.Deviation, color = factor(Experiment))) + geom_point() + 
+  facet_wrap(~ ID, scales = 'free') + geom_smooth()
+
+ggplot(data = validArtist, aes (x = THC, y = Avg.Speed, color = factor(Experiment))) + geom_point() + facet_wrap(~ ID, scales = 'free') + geom_smooth()
+# participant 113 is almost similar
+
+ggplot(data = validArtist, aes (x = THC, y = SD.Speed, color = factor(Experiment))) + geom_point() +
+  facet_wrap(~ ID, scales = 'free') + geom_smooth()
+```
+
+# Completed pair artist task
+```{r}
+completePair <- validArtist[validArtist$Experiment == 1, c(-4)]
+for (i in 1:(nrow(validArtist)/2)){
+  lane <- validArtist$SD.Lane.Deviation[(2*i-1)] - validArtist$SD.Lane.Deviation[(2*i)]
+  speed <- validArtist$Avg.Speed[(2*i-1)] - validArtist$Avg.Speed[(2*i)]
+  sdspeed <- validArtist$SD.Speed[(2*i-1)] - validArtist$SD.Speed[(2*i)]
+  completePair[i,"diffSDLane"] <- lane
+  completePair[i,"diffAvgSpeed"] <- speed
+  completePair[i,"diffSDSpeed"] <- sdspeed
+}
+```
+
+## completed pair artist task THC
+```{r}
+ggplot(data = completePair, aes (x = THC, y = diffSDLane, color = Avg.Speed)) +
+  geom_point() + scale_color_continuous(low = "blue", high = "red") +
+  geom_smooth() + ggtitle("diffSDLane") + geom_hline(yintercept=0)
+
+ggplot(data = completePair, aes (x = THC, y = diffSDLane, color = Avg.Speed)) +
+  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') +
+  geom_smooth() + ggtitle("diffSDLane") + geom_hline(yintercept=0)
+
+ggplot(data = completePair, aes (x = THC, y = diffAvgSpeed, color = Avg.Speed)) +
+  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') + 
+  geom_smooth() + ggtitle("diffAvgSpeed")
+
+ggplot(data = completePair, aes (x = THC, y = diffSDSpeed, color = Avg.Speed)) + 
+  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') +
+  geom_smooth() + ggtitle("diffSDSpeed")
+```
+
+```{r}
+ggplot(data = completePair, aes (x = THC, y = diffSDLane, color = factor(pageNum))) +
+  geom_point() + geom_smooth() + ggtitle("diffSDLane") + geom_hline(yintercept=0)
+
+ggplot(data = completePair, aes (x = THC, y = diffAvgSpeed, color = factor(pageNum))) +
+  geom_point() + geom_smooth() + ggtitle("diffAvgSpeed") + geom_hline(yintercept=0)
+
+ggplot(data = completePair, aes (x = THC, y = diffSDSpeed, color = factor(pageNum))) +
+  geom_point() + geom_smooth() + ggtitle("diffSDSpeed") + geom_hline(yintercept=0)
+```
+
+# Engaged Tasks
+
+## colored by experiment group
+```{r}
+ggplot(data = engageArtist, aes (x = THC, y = SD.Lane.Deviation, color = factor(Experiment))) + geom_point() + 
+  facet_wrap(~ ID, scales = 'free') + geom_smooth()
+
+ggplot(data = engageArtist, aes (x = THC, y = Avg.Speed, color = factor(Experiment))) + geom_point() + facet_wrap(~ ID, scales = 'free') + geom_smooth()
+# participant 113 is almost similar
+
+ggplot(data = engageArtist, aes (x = THC, y = SD.Speed, color = factor(Experiment))) + geom_point() +
+  facet_wrap(~ ID, scales = 'free') + geom_smooth()
+```
