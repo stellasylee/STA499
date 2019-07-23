@@ -158,4 +158,48 @@ summary(mesfit)
 #max brake force
 mesfit <- lqmm(Break.Diff ~ (THC == 0) + THC + BAC + Avg.Speed, random = ~ 1, group = ID, data = MessageExperiment,
                tau = 0.5)
-summary(mesfit)              
+summary(mesfit)       
+
+#creating a column in message experiment to factor road segment
+library(plyr)
+MessageExperiment <- mutate(MessageExperiment, roadsegment = LogStreams.5)
+MessageExperiment$roadsegment <- as.factor(MessageExperiment$roadsegment)
+
+#renaming the road segment column
+MessageExperiment$roadsegment <- revalue(MessageExperiment$roadsegment, 
+    c("11" = "urban","12" = "urban", "13" = "urban", "22" = "interstate", "32" = "rural", "33" = "urban"))
+
+library(ggplot2)
+#looking at the plots
+ggplot(data = MessageExperiment, aes (x = THC, y = SD.Lane.Diff, color = Avg.Speed)) + 
+  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~roadsegment , scales = 'free') + geom_smooth()
+
+#filtering to keep only interstate
+interstatemes <- dplyr::filter(MessageExperiment, roadsegment == "interstate")
+
+#filtering to keep only urban
+urbanmes <- dplyr::filter(MessageExperiment, roadsegment == "urban")
+
+#filtering to keep only interstate
+ruralmes <- dplyr::filter(MessageExperiment, roadsegment == "rural")
+
+#Paired lane deviation differnces by participants and road segments
+ggplot(data = interstatemes, aes (x = THC, y = SD.Lane.Diff, color = Avg.Speed)) + 
+  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ID , scales = 'free') + geom_smooth()
+
+ggplot(data = urbanmes, aes (x = THC, y = SD.Lane.Diff, color = Avg.Speed)) + 
+  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ID , scales = 'free') + geom_smooth()
+
+ggplot(data = ruralmes, aes (x = THC, y = SD.Lane.Diff, color = Avg.Speed)) + 
+  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ID , scales = 'free') + geom_smooth()
+
+#Paired average speed differnces by participants and road segments
+
+ggplot(data = interstatemes, aes (x = THC, y = Avg.Speed.Diff, color = Avg.Speed)) + 
+  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ID , scales = 'free') + geom_smooth()
+
+ggplot(data = urbanmes, aes (x = THC, y = Avg.Speed.Diff, color = Avg.Speed)) + 
+  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ID , scales = 'free') + geom_smooth()
+
+ggplot(data = ruralmes, aes (x = THC, y = Avg.Speed.Diff, color = Avg.Speed)) + 
+  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ID , scales = 'free') + geom_smooth()
