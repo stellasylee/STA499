@@ -1,0 +1,80 @@
+---
+title: "Plots"
+author: "Stella Lee"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(ggplot2)
+library(gridExtra)
+library(lme4)
+library(lmerTest)
+library(dplyr)
+library(tidyr)
+library(knitr)
+library(plotly)
+```
+
+# Side Mirror
+
+```{r, echo = FALSE}
+# Load data
+mirror <- read.csv ("H:\\NIDA\\analysisMirror.csv")
+# this already changed 299 frames to valid = 0 
+mirror <- dplyr::filter (mirror, total <= 300)
+mirror$road <- ifelse (mirror$LogStreams.5 <= 14, "urban", ifelse(mirror$LogStreams.5 <= 22, "interstate", "rural"))
+normalMirror <- filter(mirror, ID != 123) # XP 100% incomplete, Visit 1
+complete <- filter(mirror, valid == 1)
+```
+
+## Every Mirror Task THC and Lane Deviation divided by road, participant
+```{r}
+ggplot(data = filter(normalMirror, road == "urban"), aes (x = THC, y = SD.Lane.Deviation, color = Avg.Speed)) + geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') + geom_smooth()
+
+ggplot(data = filter(normalMirror, road == "interstate"), aes (x = THC, y = SD.Lane.Deviation, color = Avg.Speed)) + geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') + geom_smooth()
+
+ggplot(data = filter(normalMirror, road == "rural"), aes (x = THC, y = SD.Lane.Deviation, color = Avg.Speed)) + geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') + geom_smooth()
+```
+
+# Completed Tasks
+
+```{r}
+ggplot(data = filter(complete, road == "urban"), aes (x = THC, y = SD.Lane.Deviation, color = Avg.Speed)) + geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') + geom_smooth()
+
+ggplot(data = filter(complete, road == "interstate"), aes (x = THC, y = SD.Lane.Deviation, color = Avg.Speed)) + geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') + geom_smooth()
+
+ggplot(data = filter(complete, road == "rural"), aes (x = THC, y = SD.Lane.Deviation, color = Avg.Speed)) + geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') + geom_smooth()
+
+# urban segment have quadratic relationship between THC and Lane Deviation for each participant 
+## (bump in the middle and decreases again)
+# while interstate has almost no quadratic trend
+```
+
+# Completed pair mirror task
+```{r}
+completePair <- complete[complete$Experiment == 1, c(-5, -7, -8)]
+for (i in 1:(nrow(complete)/2)){
+  lane <- complete$SD.Lane.Deviation[(2*i-1)] - complete$SD.Lane.Deviation[(2*i)]
+  speed <- complete$Avg.Speed[(2*i-1)] - complete$Avg.Speed[(2*i)]
+  sdspeed <- complete$SD.Speed[(2*i-1)] - complete$SD.Speed[(2*i)]
+  completePair[i,"diffSDLane"] <- lane
+  completePair[i,"diffAvgSpeed"] <- speed
+  completePair[i,"diffSDSpeed"] <- sdspeed
+}
+```
+
+## completed pair mirror task THC and diff Lane Deviation divided by road, participant
+```{r}
+ggplot(data = filter(completePair, road == "urban"), aes (x = THC, y = diffSDLane, color = Avg.Speed)) +
+  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') +
+  geom_smooth() + ggtitle("urban")
+
+ggplot(data = filter(completePair, road == "interstate"), aes (x = THC, y = diffSDLane, color = Avg.Speed)) +
+  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') + 
+  geom_smooth() + ggtitle("interstate")
+
+ggplot(data = filter(completePair, road == "rural"), aes (x = THC, y = diffSDLane, color = Avg.Speed)) + 
+  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') +
+  geom_smooth() + ggtitle("rural")
+```
