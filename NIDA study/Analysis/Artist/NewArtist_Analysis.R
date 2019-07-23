@@ -3,6 +3,7 @@ install.packages("tidyverse")
 install.packages("dplyr")
 install.packages("lme4")
 install.packages("lmerTest")
+install.packages("lqmm")
 
 library(stringr) # String manipulation
 library(readxl) 
@@ -10,6 +11,7 @@ library(dplyr)
 library(lme4)
 library(lmerTest)
 library(plotly)
+library(lqmm)
 #reading in files
 
 AnalysisArtist <- read.csv("H:\\CannabisStudy\\artist\\artistTaskAnalysis.csv")
@@ -64,10 +66,9 @@ mesfit <- lqmm(SD.Speed.Diff ~ THC + BAC + experimentallength + factor(pageNum),
                tau = 0.75)
 summary(mesfit)
 
-
 #filtering to keep only valid artist from ArtistExperiment
 
-validArtist <- filter(ArtistExperiment, ArtistExperiment$valid > 0)
+validArtist <- dplyr::filter(ArtistExperiment, ArtistExperiment$valid > 0)
 
 #modelling with median as well
 #Lane deviation with median
@@ -104,6 +105,7 @@ summary(fit)
 fit <- lqmm(Avg.Speed.Diff ~ THC + BAC + experimentallength + factor(pageNum), random = ~1, group = ID, 
             data = validArtist, tau = 0.5)
 summary(fit)
+###### THC marginally significant with positive coefficient#########
 
 #two THC groups with median
 
@@ -111,7 +113,7 @@ fit <- lqmm(Avg.Speed.Diff ~ (THC == 0) + THC + BAC + experimentallength + facto
             data = validArtist, tau = 0.5)
 summary(fit)
 
-####THC significant with positive coeffecient####
+###### THC significant with positive coeffecient####
 
 #two THC groups with mean
 
@@ -130,6 +132,103 @@ fit <- lqmm(Avg.Speed.Diff ~ log(THC + 1) + BAC + experimentallength + factor(pa
 summary(fit)
 
 #SD Speed 
+
+#SD speed with median
+
+fit <- lqmm(SD.Speed.Diff ~ THC + BAC + experimentallength + factor(pageNum), random = ~1, group = ID, 
+            data = validArtist, tau = 0.5)
+summary(fit)
+
+#two THC groups with median
+fit <- lqmm(SD.Speed.Diff ~ (THC == 0) + THC + BAC + experimentallength + factor(pageNum), random = ~1, group = ID, 
+            data = validArtist, tau = 0.5)
+summary(fit)
+
+#two THC groups with mean
+
+fit <- lmer(data = validArtist, SD.Speed.Diff ~ (1 | ID) + (THC == 0) + THC + BAC + experimentallength + factor(pageNum))
+summary(fit)
+
+#Log(THC + 1 with mean)
+fit <- lmer(data = validArtist, SD.Speed.Diff ~ (1 | ID) + log(THC + 1) + BAC + experimentallength + factor(pageNum))
+
+summary(fit)
+
+##Log(THC + 1 with median)
+
+fit <- lqmm(SD.Speed.Diff ~ log(THC + 1) + BAC + experimentallength + factor(pageNum), random = ~1, group = ID, 
+            data = validArtist, tau = 0.5)
+summary(fit)
+
+
+
+
+#modelling data with keeping engagement
+keepingengagement <- dplyr::filter(ArtistExperiment, !((valid == 0) & (incorrect == 0)))
+
+#Lane deviation
+fit <- lqmm(SD.Lane.Diff ~ THC + BAC + Avg.Speed + factor(pageNum), random = ~1, group = ID, 
+            data = keepingengagement, tau = 0.5)
+summary(fit)
+
+#Lane deviation with two THC groups with median
+
+fit <- lqmm(SD.Lane.Diff ~ (THC == 0) + THC + BAC + Avg.Speed + factor(pageNum), random = ~1, group = ID, 
+            data = keepingengagement, tau = 0.5)
+
+summary(fit)
+
+#Lane Deviation with two THC groups with mean
+
+#Lane deviation with median
+fit <- lmer(data = keepingengagement, SD.Lane.Diff ~ (1 | ID) + (THC == 0) + THC + BAC + Avg.Speed + factor(pageNum))
+summary(fit)
+
+#Lane deviation with log(THC + 1) with mean
+fit <- lmer(data = keepingengagement, SD.Lane.Diff ~ (1 | ID) + log(THC + 1) + BAC + Avg.Speed + factor(pageNum))
+summary(fit)
+
+#Lane deviation with log(THC + 1 with median)
+fit <- lqmm(SD.Lane.Diff ~ log(THC + 1) + BAC + Avg.Speed + factor(pageNum), random = ~1, group = ID, 
+            data = keepingengagement, tau = 0.5)
+summary(fit)
+
+#average speed
+
+#average speed with median
+
+fit <- lqmm(Avg.Speed.Diff ~ THC + BAC + experimentallength + factor(pageNum), random = ~1, group = ID, 
+            data = validArtist, tau = 0.5)
+summary(fit)
+####### THC significant with positive coefficient#############
+
+
+#two THC groups with median
+
+fit <- lqmm(Avg.Speed.Diff ~ (THC == 0) + THC + BAC + experimentallength + factor(pageNum), random = ~1, group = ID, 
+            data = validArtist, tau = 0.5)
+summary(fit)
+
+##THC marginally sig with positive coeff##
+
+#two THC groups with mean
+
+fit <- lmer(data = validArtist, Avg.Speed.Diff ~ (1 | ID) + (THC == 0) + THC + BAC + experimentallength + factor(pageNum))
+summary(fit)
+
+#Log(THC + 1 with mean)
+fit <- lmer(data = validArtist, Avg.Speed.Diff ~ (1 | ID) + log(THC + 1) + BAC + experimentallength + factor(pageNum))
+
+summary(fit)
+
+##Log(THC + 1 with median)
+
+fit <- lqmm(Avg.Speed.Diff ~ log(THC + 1) + BAC + experimentallength + factor(pageNum), random = ~1, group = ID, 
+            data = validArtist, tau = 0.5)
+summary(fit)
+
+
+#SD Speed
 
 #SD speed with median
 
