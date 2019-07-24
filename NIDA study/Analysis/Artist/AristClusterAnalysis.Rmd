@@ -1,0 +1,138 @@
+---
+title: "cluster Artist"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(ggplot2)
+library(gridExtra)
+library(lme4)
+library(lmerTest)
+library(dplyr)
+library(tidyr)
+library(knitr)
+library(plotly)
+library(changepoint)
+```
+
+```{r, echo = FALSE}
+# Load data
+artist <- read.csv ("H:\\NIDA\\Artist\\analysisArtistNoEngage.csv")
+artistT <- read.csv ("H:\\NIDA\\Artist\\artistTimes.csv")
+validArtist <- filter(artist, valid == 1)
+engageArtist <- filter (artist, !((valid == 0) & (incorrect == 0)))
+```
+
+```{r}
+completePair <- validArtist[validArtist$Experiment == 1, -4]
+for (i in 1:(nrow(validArtist)/2)){
+  lane <- validArtist$SD.Lane.Deviation[(2*i-1)] - validArtist$SD.Lane.Deviation[(2*i)]
+  speed <- validArtist$Avg.Speed[(2*i-1)] - validArtist$Avg.Speed[(2*i)]
+  sdspeed <- validArtist$SD.Speed[(2*i-1)] - validArtist$SD.Speed[(2*i)]
+  completePair[i,"diffSDLane"] <- lane
+  completePair[i,"diffAvgSpeed"] <- speed
+  completePair[i,"diffSDSpeed"] <- sdspeed
+}
+```
+# Clustering results
+```{r}
+THCrange <- NULL
+for (i in unique(artist$ID)){
+  temp <- filter(artist, ID == i)
+  THCrange <- rbind.data.frame(THCrange, c(i, max(temp$THC), min(temp$THC), (max(temp$THC) - min(temp$THC))))
+}
+colnames(THCrange) <- c("ID", "max", "min", "range")
+rownames(THCrange) <- THCrange$ID
+k2 <- kmeans(THCrange[, 4], centers = 2, nstart = 25)
+fviz_cluster(k2, data = THCrange)
+# Cluster 1: Participant 7, 18, 29, 34, 35, 123, 129
+
+k3 <- kmeans(THCrange[, 4], centers = 3, nstart = 25)
+fviz_cluster(k3, data = THCrange)
+# Cluster 1: Participant 7, 18
+# cluster 2: Participant 25, 26, 29, 32, 34, 35, 123, 129
+```
+
+# 2 Clusters: 
+# Cluster 1
+```{r}
+cluster1 <- filter (validArtist, ID %in% c(7, 18, 29, 34, 35, 123, 129))
+
+fit <- lmer(SD.Lane.Deviation ~ factor(Experiment) +  BAC + THC + Avg.Speed + (1| ID) + factor (pageNum), data = cluster1)
+summary(fit)
+# THC marginally significant p = 0.0941 coef = -0.014
+# Avg.Speed marginally significant
+
+fit <- lmer(Avg.Speed ~ factor(Experiment) +  BAC + THC + (1| ID) + factor (pageNum), data = cluster1)
+summary(fit)
+# BAC and THC not significant
+
+fit <- lmer(SD.Speed ~ factor(Experiment) +  BAC + THC + (1| ID) + factor (pageNum), data = cluster1)
+summary(fit)
+anova(fit)
+# BAC and THC not significant
+```
+
+## Paired
+```{r}
+cluster1pair <- filter (completePair, ID %in% c(7, 18, 29, 34, 35, 123, 129))
+
+fit <- lmer(diffSDLane ~ BAC + THC + Avg.Speed +(1| ID) + factor (pageNum), data = cluster1pair)
+summary(fit)
+anova(fit)
+# BAC and THC not significant
+# Avg.Speed not significant
+
+fit <- lmer(diffAvgSpeed ~ BAC + THC + (1| ID) + factor (pageNum), data = cluster1pair)
+summary(fit)
+anova(fit)
+# BAC and THC not significant
+
+fit <- lmer(diffSDSpeed ~ BAC + THC + (1| ID) + factor (pageNum), data = cluster1pair)
+summary(fit)
+anova(fit)
+# THC marginally significant (p = 0.0615) coef = 0.0027
+```
+
+# Cluster 2
+```{r}
+cluster2 <- filter (validArtist, !(ID %in% c(7, 18, 29, 34, 35, 123, 129)))
+
+fit <- lmer(SD.Lane.Deviation ~ factor(Experiment) +  BAC + THC + Avg.Speed + (1| ID) + factor (pageNum), data = cluster2)
+summary(fit)
+# BAC and THC not significant
+
+fit <- lmer(Avg.Speed ~ factor(Experiment) +  BAC + THC + (1| ID) + factor (pageNum), data = cluster2)
+summary(fit)
+anova(fit)
+# BAC and THC not significant
+# pageNum is significant
+
+fit <- lmer(SD.Speed ~ factor(Experiment) +  BAC + THC + (1| ID) + factor (pageNum), data = cluster2)
+summary(fit)
+anova(fit)
+# BAC and THC not significant
+```
+
+## Paired
+```{r}
+cluster2pair <- filter (completePair, !(ID %in% c(7, 18, 29, 34, 35, 123, 129)))
+
+
+fit <- lmer(diffSDLane ~ BAC + THC + Avg.Speed +(1| ID) + factor (pageNum), data = cluster2pair)
+summary(fit)
+anova(fit)
+# BAC and THC not significant
+# Avg.Speed not significant
+
+fit <- lmer(diffAvgSpeed ~ BAC + THC + (1| ID) + factor (pageNum), data = cluster1pair)
+summary(fit)
+anova(fit)
+# BAC and THC not significant
+
+fit <- lmer(diffSDSpeed ~ BAC + THC + (1| ID) + factor (pageNum), data = cluster1pair)
+summary(fit)
+anova(fit)
+# THC marginally significant (p = 0.0615) coef = 0.0027
+```
