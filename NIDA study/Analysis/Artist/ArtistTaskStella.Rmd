@@ -19,7 +19,9 @@ library(changepoint)
 ```{r, echo = FALSE}
 # Load data
 artist <- read.csv ("H:\\NIDA\\Artist\\analysisArtist.csv")
+prop.table(table(artist$incorrect))
 artistT <- read.csv ("H:\\NIDA\\Artist\\artistTimes.csv")
+length(unique(artist$ID))
 validArtist <- filter(artist, valid == 1)
 engageArtist <- filter (artist, !((valid == 0) & (incorrect == 0)))
 ```
@@ -30,6 +32,8 @@ engageArtist <- filter (artist, !((valid == 0) & (incorrect == 0)))
 table (artist$valid, artist$incorrect)
 
 prop.table(table (validArtist$DosingLevel, validArtist$incorrect), margin = 1)
+fit1 <- glm(data = artist, incorrect ~ THC, family = "binomial")
+summary(fit1)
 ```
 
 ```{r}
@@ -40,9 +44,71 @@ summary(fit)
 
 fit <- glmer((incorrect == 0) ~ BAC + THC + factor(pageNum)  + (1 | ID), data = artist, family = "binomial")
 summary(fit)
+
+fit <- glmer((valid == 0) ~ BAC + THC + factor(pageNum)  + (1 | ID), data = artist, family = "binomial")
+kable(round(summary(fit)$coefficients, 4))
+## Odds ratios and their 95% CIs
+coefs <- summary(fit)$coefficients[,1]
+ses <- summary(fit)$coefficients[,2]
+kable(round(exp(data.frame(OR = coefs, LCL = coefs - 1.96*ses, UCL = coefs + 1.96*ses)), 4))
+
+fit <- glm(data = AnalysisArtist, (incorrect == 1) ~ THC + BAC , family = "binomial")
+summary(fit)
+kable(round(summary(fit)$coefficients, 4))
+coefs <- summary(fit)$coefficients[,1]
+ses <- summary(fit)$coefficients[,2]
+kable(round(exp(data.frame(OR = coefs, LCL = coefs - 1.96*ses, UCL = coefs + 1.96*ses)), 4))
+
+fit <- glm(data = AnalysisArtist, (valid == 0) ~ THC +BAC, family = "binomial")
+summary(fit)
+kable(round(summary(fit)$coefficients, 4))
+coefs <- summary(fit)$coefficients[,1]
+ses <- summary(fit)$coefficients[,2]
+kable(round(exp(data.frame(OR = coefs, LCL = coefs - 1.96*ses, UCL = coefs + 1.96*ses)), 4))
+
+fit <- lmer(data = validArtist, log(SD.Lane.Deviation) ~ (1 | ID) + Experiment + THC + BAC + Avg.Speed + factor(pageNum))
+
+p1 <- ggplot(data = validArtist, aes(x = SD.Lane.Deviation, fill = factor(Experiment))) + geom_density(alpha = .5) + facet_wrap( ~ DosingLevel) + labs(fill = "Secondary Task", title = "Standard Deviation of Lane Deviation")
+p1
+p1 <- ggplot(data = validArtist, aes(x = SD.Lane.Deviation)) + geom_density(alpha = .5) +   labs(fill = "Secondary Task", title = "Standard Deviation of Lane Deviation")
+ggplot(data = d3n, aes(x = SD.Lane.Deviation, fill = factor(Experiment))) + geom_density(alpha = .5) + facet_wrap( ~ DosingLevel) + labs(fill = "Secondary Task", title = "No Changepoint Detection")
+
 ```
+
+# Lane Deviation
 
 ```{r}
 fit <- lmer(SD.Lane.Deviation ~ factor(Experiment) +  BAC + THC + Avg.Speed  +  (1| ID), data = engageArtist)
 summary (fit)
+library(splines)
+fit <- lmer(log(SD.Lane.Deviation) ~ factor(Experiment) + factor (pageNum) + BAC + ns(THC, 3) + ns(Avg.Speed, 3)  +  (1| ID) , data = validArtist)
+summary (fit)
+# THC p-value = 0.0594
+plot(validArtist$THC, validArtist$SD.Lane.Deviation)
+
+plot(artist$THC, artist$SD.Lane.Deviation)
+ggplot(data = validArtist, aes (x = THC, y = SD.Lane.Deviation, color = Avg.Speed)) + geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') + geom_smooth()
+
+
+fit <- lmer(SD.Lane.Deviation ~ factor(Experiment) + DosingLevel + Avg.Speed  +  (1| ID), data = engageArtist)
+summary (fit)
+
+fit <- lmer(log2 (SD.Lane.Deviation) ~ factor(Experiment) + factor (pageNum) + DosingLevel + Avg.Speed  +  (1| ID) , data = engageArtist)
+summary (fit)
+# DosingLevelYM         0.51101    0.24450 469.32100   2.090 0.037150 * 
 ```
+
+# Avg. Speed
+```{r}
+fit <- lmer(Avg.Speed ~ factor(Experiment) + THC  +  (1| ID) , data = validArtist)
+summary (fit)
+
+fit <- lmer(Avg.Speed ~ factor(Experiment) + factor (pageNum) + BAC + THC  +  (1| ID) , data = validArtist)
+summary (fit)
+
+fit  <- lmer(Avg.Speed ~ factor(Experiment) + factor (pageNum) + DosingLevel  +  (1| ID) , data = validArtist)
+summary (fit)
+```
+
+THC and BAC not significant 
+but using Dosing Level, every dosing level is significant
