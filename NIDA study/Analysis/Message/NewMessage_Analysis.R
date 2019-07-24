@@ -201,8 +201,7 @@ fviz_cluster(k3, data = THCrange)
 # Cluster 1: Participant 7, 18
 # cluster 2: Participant 29, 31, 34, 120, 123
 
-head(THCrange)
-
+#Creating the clusters
 clus1 <- dplyr::filter(MessageExperiment, ID == "7" | ID == "18" | 
                       ID == "29" | ID == "34" | ID == "120" | ID == "123")
 
@@ -216,6 +215,7 @@ fit <- lmer(log(SD.Lane.Deviation) ~ factor(Experiment) + factor (pageNum) + BAC
 
 #modelling the data with clusters
 library(splines)
+#Paired Difference models
 #Lane Deviation
 mesfit <- lmer(data = clus1, SD.Lane.Diff ~ (1 | ID) + ns(THC, 3) + BAC + ns(Avg.Speed,3) + factor(LogStreams.5))
 summary(mesfit)
@@ -256,7 +256,6 @@ summary(mesfit)
 anova(mesfit)
 AIC(mesfit)
 #THC significant for the second level, 
-
 
 
 ggplot(data = clus1, aes (x = THC, y = SD.Lane.Diff, color = Avg.Speed)) + 
