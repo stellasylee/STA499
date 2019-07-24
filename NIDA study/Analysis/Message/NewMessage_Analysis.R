@@ -1,5 +1,3 @@
-
-
 install.packages("readxl")
 install.packages("tidyverse")
 install.packages("dplyr")
@@ -219,28 +217,47 @@ fit <- lmer(log(SD.Lane.Deviation) ~ factor(Experiment) + factor (pageNum) + BAC
 #modelling the data with clusters
 library(splines)
 #Lane Deviation
-mesfit <- lmer(data = clus1, SD.Lane.Diff ~ (1 | ID) + ns(THC, 3) + BAC + Avg.Speed + factor(LogStreams.5))
+mesfit <- lmer(data = clus1, SD.Lane.Diff ~ (1 | ID) + ns(THC, 3) + BAC + ns(Avg.Speed,3) + factor(LogStreams.5))
 summary(mesfit)
 anova(mesfit)
 
-mesfit <- lmer(data = clus2, SD.Lane.Diff ~ (1 | ID) + ns(THC, 3) + BAC + Avg.Speed + factor(LogStreams.5))
+mesfit <- lmer(data = clus2, SD.Lane.Diff ~ (1 | ID) + ns(THC, 3) + BAC + ns(Avg.Speed,3) + factor(LogStreams.5))
 summary(mesfit)
 anova(mesfit)
+AIC(mesfit)
+###BAC significant with positive coefficient
 
 #Average Speed
 mesfit <- lmer(data = clus1, Avg.Speed.Diff ~ (1 | ID) + ns(THC, 3) + BAC + factor(LogStreams.5))
 summary(mesfit)
 anova(mesfit)
 
-mesfit <- lmer(data = clus2, SD.Lane.Diff ~ (1 | ID) + ns(THC, 3) + BAC + Avg.Speed + factor(LogStreams.5))
+mesfit <- lmer(data = clus2, SD.Lane.Diff ~ (1 | ID) + ns(THC, 3) + BAC + factor(LogStreams.5))
 summary(mesfit)
 anova(mesfit)
+##BAC significant with positive coefficient
 
 #SD.Speed
-mesfit <- lmer(data = clus1, SD.Speed.Diff ~ (1 | ID) + ns(THC, 3) + BAC + Avg.Speed + factor(LogStreams.5))
+mesfit <- lmer(data = clus1, SD.Speed.Diff ~ (1 | ID) + ns(THC, 3) + BAC + factor(LogStreams.5))
 summary(mesfit)
 anova(mesfit)
 
-mesfit <- lmer(data = clus2, SD.Speed.Diff ~ (1 | ID) + ns(THC, 3) + BAC + Avg.Speed + factor(LogStreams.5))
+mesfit <- lmer(data = clus2, SD.Speed.Diff ~ (1 | ID) + ns(THC, 3) + BAC + factor(LogStreams.5))
 summary(mesfit)
 anova(mesfit)
+
+#Max Brake diff
+mesfit <- lmer(data = clus1, Break.Diff ~ (1 | ID) + ns(THC, 3) + BAC + Avg.Speed + factor(LogStreams.5))
+summary(mesfit)
+anova(mesfit)
+
+mesfit <- lmer(data = clus2, Break.Diff ~ (1 | ID) + ns(THC, 3) + BAC + ns(Avg.Speed,3) + factor(LogStreams.5))
+summary(mesfit)
+anova(mesfit)
+AIC(mesfit)
+#THC significant for the second level, 
+
+
+
+ggplot(data = clus1, aes (x = THC, y = SD.Lane.Diff, color = Avg.Speed)) + 
+  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ID , scales = 'free') + geom_smooth()
