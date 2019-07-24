@@ -1,9 +1,10 @@
+
+
 install.packages("readxl")
 install.packages("tidyverse")
 install.packages("dplyr")
 install.packages("foreach")
 install.packages("lme4")
-install.packages("lmerTest")
 install.packages("lqmm")
 
 library(MASS)
@@ -12,7 +13,6 @@ library(stringr) # String manipulation
 library(readxl) 
 library(dplyr)
 library(lme4)
-library(lmerTest)
 #reading in files
 
 eventTimesMessage <- read.csv("H:\\CannabisStudy\\message\\eventTimesMessage.csv")
@@ -183,23 +183,64 @@ urbanmes <- dplyr::filter(MessageExperiment, roadsegment == "urban")
 #filtering to keep only interstate
 ruralmes <- dplyr::filter(MessageExperiment, roadsegment == "rural")
 
-#Paired lane deviation differnces by participants and road segments
-ggplot(data = interstatemes, aes (x = THC, y = SD.Lane.Diff, color = Avg.Speed)) + 
-  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ID , scales = 'free') + geom_smooth()
+###clustering data
+install.packages("factoextra")
+library(factoextra)
 
-ggplot(data = urbanmes, aes (x = THC, y = SD.Lane.Diff, color = Avg.Speed)) + 
-  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ID , scales = 'free') + geom_smooth()
+THCrange <- NULL
+for (i in unique(MessageExperiment$ID)){
+  temp <- filter(MessageExperiment, ID == i)
+  THCrange <- rbind.data.frame(THCrange, c(i, max(temp$THC), min(temp$THC), (max(temp$THC) - min(temp$THC))))
+}
+colnames(THCrange) <- c("ID", "max", "min", "range")
+rownames(THCrange) <- THCrange$ID
+k2 <- kmeans(THCrange[, 4], centers = 2, nstart = 25)
+fviz_cluster(k2, data = THCrange)
+# Cluster 1: Participant 7, 18, 29, 34, 120, 123
 
-ggplot(data = ruralmes, aes (x = THC, y = SD.Lane.Diff, color = Avg.Speed)) + 
-  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ID , scales = 'free') + geom_smooth()
+k3 <- kmeans(THCrange[, 4], centers = 3, nstart = 25)
+fviz_cluster(k3, data = THCrange)
+# Cluster 1: Participant 7, 18
+# cluster 2: Participant 29, 31, 34, 120, 123
 
-#Paired average speed differnces by participants and road segments
+head(THCrange)
 
-ggplot(data = interstatemes, aes (x = THC, y = Avg.Speed.Diff, color = Avg.Speed)) + 
-  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ID , scales = 'free') + geom_smooth()
+clus1 <- dplyr::filter(MessageExperiment, ID == "7" | ID == "18" | 
+                      ID == "29" | ID == "34" | ID == "120" | ID == "123")
 
-ggplot(data = urbanmes, aes (x = THC, y = Avg.Speed.Diff, color = Avg.Speed)) + 
-  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ID , scales = 'free') + geom_smooth()
+clus2 <- dplyr::filter(MessageExperiment, ID == "3" | ID == "10" | ID == "15" | ID == "17" |
+                         ID == "15" | ID == "21" | ID == "25" | ID == "26" | ID == "31" | ID == "32"
+                       | ID == "35" | ID == "104" | ID == "113" | ID == "129")
 
-ggplot(data = ruralmes, aes (x = THC, y = Avg.Speed.Diff, color = Avg.Speed)) + 
-  geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ID , scales = 'free') + geom_smooth()
+
+library(splines)
+fit <- lmer(log(SD.Lane.Deviation) ~ factor(Experiment) + factor (pageNum) + BAC + ns(THC, 3) + ns(Avg.Speed, 3)  +  (1| ID) , data = validArtist)
+
+#modelling the data with clusters
+library(splines)
+#Lane Deviation
+mesfit <- lmer(data = clus1, SD.Lane.Diff ~ (1 | ID) + ns(THC, 3) + BAC + Avg.Speed + factor(LogStreams.5))
+summary(mesfit)
+anova(mesfit)
+
+mesfit <- lmer(data = clus2, SD.Lane.Diff ~ (1 | ID) + ns(THC, 3) + BAC + Avg.Speed + factor(LogStreams.5))
+summary(mesfit)
+anova(mesfit)
+
+#Average Speed
+mesfit <- lmer(data = clus1, Avg.Speed.Diff ~ (1 | ID) + ns(THC, 3) + BAC + factor(LogStreams.5))
+summary(mesfit)
+anova(mesfit)
+
+mesfit <- lmer(data = clus2, SD.Lane.Diff ~ (1 | ID) + ns(THC, 3) + BAC + Avg.Speed + factor(LogStreams.5))
+summary(mesfit)
+anova(mesfit)
+
+#SD.Speed
+mesfit <- lmer(data = clus1, SD.Speed.Diff ~ (1 | ID) + ns(THC, 3) + BAC + Avg.Speed + factor(LogStreams.5))
+summary(mesfit)
+anova(mesfit)
+
+mesfit <- lmer(data = clus2, SD.Speed.Diff ~ (1 | ID) + ns(THC, 3) + BAC + Avg.Speed + factor(LogStreams.5))
+summary(mesfit)
+anova(mesfit)
