@@ -134,5 +134,5 @@ anova(fit)
 fit <- lmer(diffSDSpeed ~ BAC + THC + (1| ID) + factor (pageNum), data = cluster1pair)
 summary(fit)
 anova(fit)
-# THC marginally significant (p = 0.0615) coef = 0.0027
+# BAC and THC not significant
 ```
