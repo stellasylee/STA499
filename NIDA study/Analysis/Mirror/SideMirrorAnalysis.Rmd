@@ -157,3 +157,65 @@ anova(fit)
 # difference in average speed and road segment is also not significant
 AIC(fit)
 ```
+# Clustering results
+```{r}
+THCrange <- NULL
+for (i in unique(mirror$ID)){
+  temp <- filter(mirror, ID == i)
+  THCrange <- rbind.data.frame(THCrange, c(i, max(temp$THC), min(temp$THC), (max(temp$THC) - min(temp$THC))))
+}
+colnames(THCrange) <- c("ID", "max", "min", "range")
+rownames(THCrange) <- THCrange$ID
+k2 <- kmeans(THCrange[, 4], centers = 2, nstart = 25)
+fviz_cluster(k2, data = THCrange)
+# Cluster 1: Participant 7, 18, 29, 34, 120, 123
+
+k3 <- kmeans(THCrange[, 4], centers = 3, nstart = 25)
+fviz_cluster(k3, data = THCrange)
+# Cluster 1: Participant 7, 18
+# cluster 2: Participant 29, 31, 34, 120, 123
+```
+
+# Cluster 1
+```{r}
+cluster1 <- filter (complete, ID %in% c(7, 18, 29, 34, 120, 123))
+
+fit <- lmer(Avg.Speed ~ factor(Experiment) +  BAC + THC + Avg.Speed  +  (1| ID) + factor (Visit) + factor(LogStreams.5), data = cluster1)
+summary(fit)
+# BAC p = 0.005 coef = 18.827
+# THC p = 0.021 coef = -0.059
+# Experiment not significant
+
+cluster1pair <- filter (completePair, ID %in% c(7, 18, 29, 34, 120, 123))
+fit <- lmer(diffSDLane ~ BAC + THC + Avg.Speed +  (1| ID) + factor(LogStreams.5) , data = cluster1pair)
+summary(fit)
+anova(fit)
+# not significant
+
+fit <- lmer(diffAvgSpeed ~ BAC + THC + (1| ID)+ factor(LogStreams.5), data = cluster1pair)
+summary(fit)
+anova(fit)
+# THC p = 0.002 coef = -0.017
+```
+
+# Cluster 2
+```{r}
+cluster2 <- filter (complete, !(ID %in% c(7, 18, 29, 34, 120, 123)))
+cluster2pair <- filter (completePair, !(ID %in% c(7, 18, 29, 34, 120, 123)))
+fit <- lmer(Avg.Speed ~ factor(Experiment) +  BAC + THC + Avg.Speed  +  (1| ID) + factor (Visit) + factor(LogStreams.5), data = cluster2)
+summary(fit)
+# BAC p = 0.004278 coef = 16.77858
+# THC p = 4.38e-05 coef = -0.18520
+# Experiment not significant
+
+cluster2pair <- filter (completePair, !(ID %in% c(7, 18, 29, 34, 120, 123)))
+fit <- lmer(diffSDLane ~ BAC + THC + Avg.Speed +  (1| ID) + factor(LogStreams.5) , data = cluster2pair)
+summary(fit)
+anova(fit)
+# not significant
+
+fit <- lmer(diffAvgSpeed ~ BAC + THC + (1| ID)+ factor(LogStreams.5), data = cluster2pair)
+summary(fit)
+anova(fit)
+# not significant
+```
