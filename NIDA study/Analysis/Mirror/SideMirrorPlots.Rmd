@@ -78,3 +78,47 @@ ggplot(data = filter(completePair, road == "rural"), aes (x = THC, y = diffSDLan
   geom_point() + scale_color_continuous(low = "blue", high = "red") + facet_wrap(~ ID, scales = 'free') +
   geom_smooth() + ggtitle("rural")
 ```
+# Clustering
+```{r}
+THCrange <- NULL
+for (i in unique(mirror$ID)){
+  temp <- filter(mirror, ID == i)
+  THCrange <- rbind.data.frame(THCrange, c(i, max(temp$THC), min(temp$THC), (max(temp$THC) - min(temp$THC))))
+}
+colnames(THCrange) <- c("ID", "max", "min", "range")
+rownames(THCrange) <- THCrange$ID
+k2 <- kmeans(THCrange[, 4], centers = 2, nstart = 25)
+fviz_cluster(k2, data = THCrange)
+# Cluster 1: Participant 7, 18, 29, 34, 120, 123
+
+k3 <- kmeans(THCrange[, 4], centers = 3, nstart = 25)
+fviz_cluster(k3, data = THCrange)
+# Cluster 1: Participant 7, 18
+# cluster 2: Participant 29, 31, 34, 120, 123
+```
+
+# Cluster 1: 7, 18, 29, 34, 120, 123
+```{r}
+cluster1 <- filter (complete, ID %in% c(7, 18, 29, 34, 120, 123))
+cluster1pair <- filter (completePair, ID %in% c(7, 18, 29, 34, 120, 123))
+ggplot(data = filter(cluster1, road == "urban"), aes (x = THC, y = SD.Lane.Deviation, color = Avg.Speed)) +
+  geom_point() + scale_color_continuous(low = "blue", high = "red") + 
+  geom_smooth()  + ggtitle("urban")
+
+ggplot(data = cluster1pair, aes (x = THC, y = diffAvgSpeed, color = Avg.Speed)) + 
+  geom_point() + scale_color_continuous(low = "blue", high = "red") + 
+  geom_smooth(method = 'loess', span = .4, se = FALSE) + ggtitle("diffAvgSpeed Cluster 1") + geom_hline(yintercept=0)
+```
+
+# Cluster 2: 
+```{r}
+cluster2 <- filter (complete, !(ID %in% c(7, 18, 29, 34, 120, 123)))
+cluster2pair <- filter (completePair, !(ID %in% c(7, 18, 29, 34, 120, 123)))
+ggplot(data = filter(cluster2, road == "urban"), aes (x = THC, y = SD.Lane.Deviation, color = Avg.Speed)) +
+  geom_point() + scale_color_continuous(low = "blue", high = "red") +
+  geom_smooth()  + ggtitle("urban")
+
+ggplot(data = cluster2pair, aes (x = THC, y = diffAvgSpeed, color = Avg.Speed)) + 
+  geom_point() + scale_color_continuous(low = "blue", high = "red") + 
+  geom_smooth(method = 'loess', span = .4, se = FALSE) + ggtitle("diffAvgSpeed Cluster 1") + geom_hline(yintercept=0)
+```
