@@ -296,6 +296,10 @@ clus2art <- dplyr::filter(validArtist, ID == "3" | ID == "10" | ID == "15" | ID 
 
 #creating models with the clusters
 
+library(splines)
+
+
+#Paired Differences
 #Lane Deviation
 fit <- lmer(data = clus1art, SD.Lane.Diff ~ (1 | ID) + ns(THC,3) + BAC + ns(Avg.Speed,3) + factor(pageNum))
 summary(fit)
