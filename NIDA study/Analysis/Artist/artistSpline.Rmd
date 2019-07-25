@@ -1,0 +1,106 @@
+---
+title: "Artist Spline"
+author: "Stella Lee"
+date: "July 25, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(gridExtra)
+library(lme4)
+library(lmerTest)
+library(dplyr)
+library(tidyr)
+library(knitr)
+library(plotly)
+library(changepoint)
+library(splines)
+```
+
+```{r, echo = FALSE}
+# Load data
+artist <- read.csv ("H:\\NIDA\\Artist\\analysisArtistNoEngage.csv")
+artistT <- read.csv ("H:\\NIDA\\Artist\\artistTimes.csv")
+validArtist <- filter(artist, valid == 1)
+engageArtist <- filter (artist, !((valid == 0) & (incorrect == 0)))
+```
+
+```{r}
+completePair <- validArtist[validArtist$Experiment == 1, -4]
+for (i in 1:(nrow(validArtist)/2)){
+  lane <- validArtist$SD.Lane.Deviation[(2*i-1)] - validArtist$SD.Lane.Deviation[(2*i)]
+  speed <- validArtist$Avg.Speed[(2*i-1)] - validArtist$Avg.Speed[(2*i)]
+  sdspeed <- validArtist$SD.Speed[(2*i-1)] - validArtist$SD.Speed[(2*i)]
+  completePair[i,"diffSDLane"] <- lane
+  completePair[i,"diffAvgSpeed"] <- speed
+  completePair[i,"diffSDSpeed"] <- sdspeed
+}
+```
+
+```{r}
+completePairEngage <- engageArtist[engageArtist$Experiment == 1, -4]
+for (i in 1:(nrow(validArtist)/2)){
+  lane <- engageArtist$SD.Lane.Deviation[(2*i-1)] - engageArtist$SD.Lane.Deviation[(2*i)]
+  speed <- engageArtist$Avg.Speed[(2*i-1)] - engageArtist$Avg.Speed[(2*i)]
+  sdspeed <- engageArtist$SD.Speed[(2*i-1)] - engageArtist$SD.Speed[(2*i)]
+  completePairEngage[i,"diffSDLane"] <- lane
+  completePairEngage[i,"diffAvgSpeed"] <- speed
+  completePairEngage[i,"diffSDSpeed"] <- sdspeed
+}
+```
+
+
+# Valid Artist:
+
+```{r}
+
+```
+
+# 2 Clusters: 
+# cluster 1
+```{r}
+cluster1pair <- filter (completePair, ID %in% c(7, 18, 29, 34, 120, 123))
+
+fit <- lmer(diffSDLane ~ BAC + THC + diffAvgSpeed +(1| ID) + factor (pageNum), data = cluster1pair)
+summary(fit)
+anova(fit)
+AIC(fit) # 179.5356
+# BAC and THC not significant
+# diffAvgSpeed not significant
+
+fit <- lmer(diffSDLane ~ BAC + ns(THC, 3) + diffAvgSpeed +(1| ID) + factor (pageNum), data = cluster1pair)
+summary(fit)
+AIC(fit) # 174.4284
+
+fit <- lmer(diffAvgSpeed ~ BAC + THC + (1| ID) + factor (pageNum), data = cluster1pair)
+summary(fit)
+anova(fit)
+# BAC and THC not significant
+
+fit <- lmer(diffSDSpeed ~ BAC + THC + (1| ID) + factor (pageNum), data = cluster1pair)
+summary(fit)
+anova(fit)
+# BAC and THC not significant
+```
+
+```{r}
+cluster2pair <- filter (completePair, !(ID %in% c(7, 18, 29, 34, 120, 123)))
+
+fit <- lmer(diffSDLane ~ BAC + THC + Avg.Speed +(1| ID) + factor (pageNum), data = cluster2pair)
+summary(fit)
+anova(fit)
+# BAC and THC not significant
+# Avg.Speed not significant
+
+fit <- lmer(diffAvgSpeed ~ BAC + THC + (1| ID) + factor (pageNum), data = cluster1pair)
+summary(fit)
+anova(fit)
+# BAC and THC not significant
+
+fit <- lmer(diffSDSpeed ~ BAC + THC + (1| ID) + factor (pageNum), data = cluster1pair)
+summary(fit)
+anova(fit)
+# BAC and THC not significant
+```
