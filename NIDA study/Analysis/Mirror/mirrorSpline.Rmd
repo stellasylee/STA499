@@ -1,0 +1,86 @@
+---
+title: "Side Mirror Spline"
+author: "Stella Lee"
+date: "July 25, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(gridExtra)
+library(lme4)
+library(lmerTest)
+library(dplyr)
+library(tidyr)
+library(knitr)
+library(plotly)
+library(changepoint)
+library(splines)
+```
+
+```{r, echo = FALSE}
+# Load data
+mirror <- read.csv ("H:\\NIDA\\analysisMirror.csv")
+# this already changed 299 frames to valid = 0 
+mirror <- dplyr::filter (mirror, total <= 300)
+
+complete <- filter(mirror, valid == 1)
+```
+
+# Paired Difference
+
+```{r}
+completePair <- complete[complete$Experiment == 1, c(-5, -7, -8)]
+for (i in 1:(nrow(complete)/2)){
+  lane <- complete$SD.Lane.Deviation[(2*i-1)] - complete$SD.Lane.Deviation[(2*i)]
+  speed <- complete$Avg.Speed[(2*i-1)] - complete$Avg.Speed[(2*i)]
+  sdspeed <- complete$SD.Speed[(2*i-1)] - complete$SD.Speed[(2*i)]
+  completePair[i,"diffSDLane"] <- lane
+  completePair[i,"diffAvgSpeed"] <- speed
+  completePair[i,"diffSDSpeed"] <- sdspeed
+}
+```
+
+# 2 Clusters: 
+# Cluster 1
+
+```{r}
+cluster1pair <- filter (completePair, ID %in% c(7, 18, 29, 34, 120, 123))
+
+fit <- lmer(diffSDLane ~ BAC + THC + Avg.Speed +  (1| ID) + factor (Visit) + factor(LogStreams.5) , data = cluster1pair)
+summary(fit)
+anova(fit)
+# BAC and THC not significant
+# Avg.Speed, Log.Streams significant
+
+fit <- lmer(diffAvgSpeed ~ BAC + THC + (1| ID) + factor (Visit) + factor(LogStreams.5), data = cluster1pair)
+summary(fit)
+anova(fit)
+# THC p = 0.002 coef = -0.017
+
+fit <- lmer(diffSDSpeed ~ BAC + THC + (1| ID) + factor (Visit) + factor(LogStreams.5), data = cluster1pair)
+summary(fit)
+anova(fit)
+# THC marginally significant (p = 0.0615) coef = 0.0027
+```
+
+# Cluster 2
+
+```{r}
+cluster2pair <- filter (completePair, !(ID %in% c(7, 18, 29, 34, 120, 123)))
+fit <- lmer(diffSDLane ~ BAC + THC + Avg.Speed +  (1| ID) + factor(LogStreams.5) , data = cluster2pair)
+summary(fit)
+anova(fit)
+# not significant
+
+fit <- lmer(diffAvgSpeed ~ BAC + THC + (1| ID)+ factor(Visit) + factor(LogStreams.5), data = cluster2pair)
+summary(fit)
+anova(fit)
+# not significant
+
+fit <- lmer(diffSDSpeed ~ BAC + THC + (1| ID)+ factor(Visit) + factor(LogStreams.5), data = cluster2pair)
+summary(fit)
+anova(fit)
+# not significant
+```
