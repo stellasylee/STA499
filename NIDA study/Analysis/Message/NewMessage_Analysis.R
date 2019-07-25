@@ -34,30 +34,96 @@ MessageExperiment <- mutate(MessageExperiment, SD.Lane.Diff = MessageExperiment$
 
 
 #Modelling the data with Message Experiment
-
+###### Plotting predicted values with spline
 #lane deviation
 
-mesfit <- lmer(data = MessageExperiment, SD.Lane.Diff ~ (1 | ID) + THC + BAC + Avg.Speed + factor(LogStreams.5))
+mesfit <- lmer(data = MessageExperiment, SD.Lane.Diff ~ (1 | ID) + ns(THC, 3) + BAC + Avg.Speed  + factor(LogStreams.5))
 summary(mesfit)
-
+anova(mesfit)
 ### BAC is significant predictor of lane deviation####
 
-#Average Speed
-mesfit <- lmer(data = MessageExperiment, Avg.Speed.Diff ~ (1 | ID) + THC + BAC + factor(LogStreams.5)) 
-summary(mesfit)
+mm <- with(MessageExperiment, model.matrix( ~ -1 + ns(THC,3))) # Recreate basis expansions of THC
+yy <- as.matrix(coef(mesfit)$ID[1,2:4]) %*% t(as.matrix(mm))
+MessageExperiment$yy <- as.vector(yy)
+ggplot(data = MessageExperiment, aes(x = THC, y = yy, color = factor(ID %in% c(7, 18, 29, 34, 120, 123)))) + geom_point()
 
-#### THC significant predictor with positive coefficient####
+
+#w/o spline
+mesfit <- lmer(data = MessageExperiment, SD.Lane.Diff ~ (1 | ID) + THC + BAC + Avg.Speed + factor(LogStreams.5))
+mm <- with(MessageExperiment, model.matrix( ~ -1 + THC)) 
+yy <- as.matrix(coef(mesfit)$ID[1,2]) %*% t(as.matrix(mm)) 
+MessageExperiment$yy <- as.vector(yy)
+ggplot(data = MessageExperiment, aes(x = THC, y = yy, color = factor(ID %in% c(7, 18, 29, 34, 120, 123)))) + geom_point()
+summary(mesfit)
+anova(mesfit)
+### BAC is significant predictor of lane deviation####
+
+
+#Average Speed
+mesfit <- lmer(data = MessageExperiment, Avg.Speed.Diff ~ (1 | ID) + ns(THC, 3) + BAC + factor(LogStreams.5)) 
+summary(mesfit)
+anova(mesfit)
+
+mm <- with(MessageExperiment, model.matrix( ~ -1 + ns(THC,3))) # Recreate basis expansions of THC
+yy <- as.matrix(coef(mesfit)$ID[1,2:4]) %*% t(as.matrix(mm))
+MessageExperiment$yy <- as.vector(yy)
+ggplot(data = MessageExperiment, aes(x = THC, y = yy, color = factor(ID %in% c(7, 18, 29, 34, 120, 123)))) + geom_point()
+
+
+#w/o spline
+mesfit <- lmer(data = MessageExperiment, Avg.Speed.Diff ~ (1 | ID) + THC + BAC + factor(LogStreams.5))
+summary(mesfit)
+anova(mesfit)
+
+mm <- with(MessageExperiment, model.matrix( ~ -1 + THC)) 
+yy <- as.matrix(coef(mesfit)$ID[1,2]) %*% t(as.matrix(mm)) 
+MessageExperiment$yy <- as.vector(yy)
+ggplot(data = MessageExperiment, aes(x = THC, y = yy, color = factor(ID %in% c(7, 18, 29, 34, 120, 123)))) + geom_point()
+#### THC significant predictor with positive coefficient#### i.e. slow down less
 
 #standard deviation speed
+mesfit <- lmer(data = MessageExperiment, SD.Speed.Diff ~ (1 | ID) + ns(THC,3) + BAC + factor(LogStreams.5)) 
+summary(mesfit)
+anova(mesfit)
+
+mm <- with(MessageExperiment, model.matrix( ~ -1 + ns(THC,3))) # Recreate basis expansions of THC
+yy <- as.matrix(coef(mesfit)$ID[1,2:4]) %*% t(as.matrix(mm))
+MessageExperiment$yy <- as.vector(yy)
+ggplot(data = MessageExperiment, aes(x = THC, y = yy, color = factor(ID %in% c(7, 18, 29, 34, 120, 123)))) + geom_point()
+
+
+#w/o spline
 mesfit <- lmer(data = MessageExperiment, SD.Speed.Diff ~ (1 | ID) + THC + BAC + factor(LogStreams.5)) 
 summary(mesfit)
-AIC(mesfit)
+anova(mesfit)
+
+mm <- with(MessageExperiment, model.matrix( ~ -1 + THC)) 
+yy <- as.matrix(coef(mesfit)$ID[1,2]) %*% t(as.matrix(mm)) 
+MessageExperiment$yy <- as.vector(yy)
+ggplot(data = MessageExperiment, aes(x = THC, y = yy, color = factor(ID %in% c(7, 18, 29, 34, 120, 123)))) + geom_point()
+
 
 #max brake force
 
-mesfit <- lmer(data = MessageExperiment, Break.Diff ~ (1 | ID) + THC + BAC + factor(LogStreams.5) + Avg.Speed) 
+mesfit <- lmer(data = MessageExperiment, Break.Diff ~ (1 | ID) + ns(THC, 3) + BAC + factor(LogStreams.5) + Avg.Speed) 
 summary(mesfit)
+anova(mesfit)
 
+mm <- with(MessageExperiment, model.matrix( ~ -1 + ns(THC,3))) # Recreate basis expansions of THC
+yy <- as.matrix(coef(mesfit)$ID[1,2:4]) %*% t(as.matrix(mm))
+MessageExperiment$yy <- as.vector(yy)
+ggplot(data = MessageExperiment, aes(x = THC, y = yy, color = factor(ID %in% c(7, 18, 29, 34, 120, 123)))) + geom_point()
+
+
+#w/o spline
+mesfit <- lmer(data = MessageExperiment, Break.Diff ~ (1 | ID) + THC + BAC + factor(LogStreams.5) + Avg.Speed) 
+
+
+mm <- with(MessageExperiment, model.matrix( ~ -1 + THC)) 
+yy <- as.matrix(coef(mesfit)$ID[1,2]) %*% t(as.matrix(mm)) 
+MessageExperiment$yy <- as.vector(yy)
+ggplot(data = MessageExperiment, aes(x = THC, y = yy, color = factor(ID %in% c(7, 18, 29, 34, 120, 123)))) + geom_point()
+ggplot(data = MessageExperiment, aes(x = THC, y = Break.Diff))
 #running mixed effects quantile regression
 #lane deviation
 mesfit <- lqmm(SD.Lane.Diff ~ THC + BAC + Avg.Speed + factor(LogStreams.5), random = ~ 1, group = ID, data = MessageExperiment,
@@ -139,6 +205,10 @@ summary(mesfit)
 mesfit <- lqmm(SD.Lane.Diff ~ (THC == 0) + THC + BAC + Avg.Speed + factor(LogStreams.5), random = ~ 1, group = ID, data = MessageExperiment,
                tau = 0.5)
 summary(mesfit)
+
+mm <- with(MessageExperiment, model.matrix( ~ -1 + ns(THC,3))) # Recreate basis expansions of THC
+yy <- as.matrix(coef(mesfit)$ID[1,3:5]) %*% t(as.matrix(mm))
+plot(messagePair$THC, yy)
 ###### BAC significant predictor lane deviation#####
 
 #Avg Speed
@@ -215,43 +285,103 @@ fit <- lmer(log(SD.Lane.Deviation) ~ factor(Experiment) + factor (pageNum) + BAC
 
 #modelling the data with clusters
 library(splines)
-#Paired Difference models
+
 #Lane Deviation
-mesfit <- lmer(data = clus1, SD.Lane.Diff ~ (1 | ID) + ns(THC, 3) + BAC + ns(Avg.Speed,3) + factor(LogStreams.5))
+mesfit <- lmer(data = clus1, SD.Lane.Deviation ~ (1 | ID) + ns(THC, 3) + BAC + Avg.Speed.Diff + factor(LogStreams.5))
 summary(mesfit)
 anova(mesfit)
+AIC(mesfit)
 
-mesfit <- lmer(data = clus2, SD.Lane.Diff ~ (1 | ID) + ns(THC, 3) + BAC + ns(Avg.Speed,3) + factor(LogStreams.5))
+mesfit <- lmer(data = clus2, SD.Lane.Deviation ~ (1 | ID) + THC + BAC + Avg.Speed.Diff + factor(LogStreams.5))
+summary(mesfit)
+anova(mesfit)
+AIC(mesfit)
+##BAC sig with positive coeff
+##Spline does not improve the model
+
+#Average Speed
+mesfit <- lmer(data = clus1, Avg.Speed ~ (1 | ID) + ns(THC, 3) + BAC + factor(LogStreams.5))
+summary(mesfit)
+anova(mesfit)
+AIC(mesfit)
+
+
+mesfit <- lmer(data = clus2, Avg.Speed ~ (1 | ID) + ns(THC, 3) + BAC + factor(LogStreams.5))
+summary(mesfit)
+anova(mesfit)
+AIC(mesfit)
+##BAC significant with positive coefficient
+
+#SD.Speed
+mesfit <- lmer(data = clus1, Avg.Speed ~ (1 | ID) + ns(THC, 3) + BAC + factor(LogStreams.5))
+summary(mesfit)
+anova(mesfit)
+AIC(mesfit)
+
+mesfit <- lmer(data = clus2, Avg.Speed ~ (1 | ID) + ns(THC, 3) + BAC + factor(LogStreams.5))
+summary(mesfit)
+anova(mesfit)
+AIC(mesfit)
+#Max Brake diff
+mesfit <- lmer(data = clus1, Max.Brake ~ (1 | ID) + ns(THC, 3) + BAC + Avg.Speed + factor(LogStreams.5))
+summary(mesfit)
+anova(mesfit)
+AIC(mesfit)
+
+mesfit <- lmer(data = clus2, Max.Brake ~ (1 | ID) + ns(THC, 3) + BAC + ns(Avg.Speed,3) + factor(LogStreams.5))
+summary(mesfit)
+anova(mesfit)
+AIC(mesfit)
+
+
+
+
+#Paired Difference models
+#Lane Deviation
+mesfit <- lmer(data = clus1, SD.Lane.Diff ~ (1 | ID) + ns(THC, 3) + BAC + THC:BAC + Avg.Speed.Diff + factor(LogStreams.5))
+summary(mesfit)
+anova(mesfit)
+AIC(mesfit)
+##### THC:BAC sig interaction
+
+mesfit <- lmer(data = clus2, SD.Lane.Diff ~ (1 | ID) + ns(THC, 3) + BAC  + Avg.Speed.Diff + factor(LogStreams.5))
 summary(mesfit)
 anova(mesfit)
 AIC(mesfit)
 ###BAC significant with positive coefficient
 
 #Average Speed
-mesfit <- lmer(data = clus1, Avg.Speed.Diff ~ (1 | ID) + ns(THC, 3) + BAC + factor(LogStreams.5))
+mesfit <- lmer(data = clus1, Avg.Speed.Diff ~ (1 | ID) + ns(THC, 3) + BAC  + factor(LogStreams.5))
 summary(mesfit)
 anova(mesfit)
+AIC(mesfit)
 
-mesfit <- lmer(data = clus2, SD.Lane.Diff ~ (1 | ID) + ns(THC, 3) + BAC + factor(LogStreams.5))
+
+mesfit <- lmer(data = clus2, Avg.Speed.Diff ~ (1 | ID) + THC + BAC + factor(LogStreams.5))
 summary(mesfit)
 anova(mesfit)
-##BAC significant with positive coefficient
+AIC(mesfit)
 
 #SD.Speed
 mesfit <- lmer(data = clus1, SD.Speed.Diff ~ (1 | ID) + ns(THC, 3) + BAC + factor(LogStreams.5))
 summary(mesfit)
 anova(mesfit)
+AIC(mesfit)
 
-mesfit <- lmer(data = clus2, SD.Speed.Diff ~ (1 | ID) + ns(THC, 3) + BAC + factor(LogStreams.5))
+
+mesfit <- lmer(data = clus2, SD.Speed.Diff ~ (1 | ID) + THC + BAC + factor(LogStreams.5))
 summary(mesfit)
 anova(mesfit)
+AIC(mesfit)
+#Spline does not make the model better
 
 #Max Brake diff
-mesfit <- lmer(data = clus1, Break.Diff ~ (1 | ID) + ns(THC, 3) + BAC + Avg.Speed + factor(LogStreams.5))
+mesfit <- lmer(data = clus1, Break.Diff ~ (1 | ID) + ns(THC, 3) + BAC + Avg.Speed.Diff + factor(LogStreams.5))
 summary(mesfit)
 anova(mesfit)
+AIC(mesfit)
 
-mesfit <- lmer(data = clus2, Break.Diff ~ (1 | ID) + ns(THC, 3) + BAC + ns(Avg.Speed,3) + factor(LogStreams.5))
+mesfit <- lmer(data = clus2, Break.Diff ~ (1 | ID) + ns(THC, 3) + BAC + Avg.Speed.Diff + factor(LogStreams.5))
 summary(mesfit)
 anova(mesfit)
 AIC(mesfit)
