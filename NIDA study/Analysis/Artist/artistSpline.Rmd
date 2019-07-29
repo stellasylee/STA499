@@ -55,7 +55,37 @@ for (i in 1:(nrow(validArtist)/2)){
 # Valid Artist:
 
 ```{r}
+fit <- lmer(diffSDLane ~ BAC + THC + diffAvgSpeed +(1| ID) + factor (pageNum), data = completePair)
+summary(fit)
+anova(fit)
+AIC(fit) # 568.2574
+# not significant
 
+fit <- lmer(diffSDLane ~ BAC + ns(THC, 3) + diffAvgSpeed +(1| ID) + factor (pageNum), data = completePair)
+summary(fit)
+AIC(fit) # 564.4642
+# not significant
+
+fit <- lm(diffAvgSpeed ~ BAC + THC + factor (pageNum), data = completePair)
+summary(fit)
+anova(fit)
+AIC(fit) # 1059.103
+# BAC and THC not significant
+
+fit <- lm(diffAvgSpeed ~ BAC + ns(THC, 3) + factor (pageNum), data = completePair)
+AIC(fit) # 1061.724
+
+fit <- lm(diffSDSpeed ~ BAC + THC + factor (pageNum), data = completePair)
+summary(fit)
+anova(fit)
+AIC(fit) # 452.4838
+# BAC and THC not significant
+
+fit <- lm(diffSDSpeed ~ BAC + ns(THC,3) + factor (pageNum), data = completePair)
+summary(fit)
+anova(fit)
+AIC(fit) #455.5648
+# BAC and THC not significant
 ```
 
 # 2 Clusters: 
