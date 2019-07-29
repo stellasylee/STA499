@@ -1,16 +1,3 @@
-install.packages("readxl")
-install.packages("tidyverse")
-install.packages("dplyr")
-install.packages("lme4")
-install.packages("lmerTest")
-
-library(stringr) # String manipulation
-library(readxl) 
-library(dplyr)
-library(lme4)
-library(lmerTest)
-library(plotly)
-library(ggplot2)
 #reading in files
 
 AnalysisArtist <- read.csv("H:\\CannabisStudy\\artist\\artistTaskAnalysis.csv")
@@ -23,11 +10,17 @@ AnalysisArtist$experimentallength <- (AnalysisArtist$experimentallength /60)
 #checking if THC + BAC groups got more incorrect 
 #### fit <- glmer((valid == 0) ~ BAC + THC + factor(pageNum)  + (1 | ID), data = data2, family = "binomial")
 
-fit1 <- glm(data = AnalysisArtist, incorrect ~ THC, family = "binomial")
+require(MASS)
+fit1 <- glm(data = AnalysisArtist, incorrect ~ THC + BAC, family = "binomial")
 summary(fit1)
+AIC(mesfit)
+exp(coef(fit1))
 
-fit2 <- glm(data = AnalysisArtist, valid ~ THC, family = "binomial")
+
+fit2 <- glm(data = AnalysisArtist, valid ~ THC + BAC, family = "binomial")
 summary(fit2)
+AIC(fit2)
+exp(coef(fit2))
 
 #filtering to keep only valid artist ###since they might not be engaged
 validArtist <- filter(AnalysisArtist, AnalysisArtist$valid > 0)
@@ -64,7 +57,7 @@ summary(fit)
 
 
 #modelling the data with filtered data to keep only valid artist
-fit <- lmer(data = validArtist, log(SD.Lane.Deviation) ~ (1 | ID) + Experiment + (THC == 0) + THC  + BAC + Avg.Speed + (pageNum > 1))
+fit <- lmer(data = validArtist, log(SD.Lane.Deviation) ~ (1 | ID) + factor (Experiment) + THC  + BAC + Avg.Speed + factor(pageNum))
 summary(fit)
 
 ggplot(validArtist, aes(x = log(THC+1), y = SD.Lane.Deviation, color = factor(Experiment))) + geom_point() + geom_smooth(method = "loess")
@@ -79,7 +72,7 @@ plot(validArtist$Avg.Speed, resid(fit),    ylab="Residuals", xlab="Avg.Speed", m
 plot(validArtist$pageNum, resid(fit),    ylab="Residuals", xlab="pageNum", main="Valid Artist Task") + abline(0,0)
 
 #exploring other models
-fit <- lmer(data = validArtist,  Avg.Speed ~ (1 | ID) + Experiment + THC + BAC + experimentallength + (pageNum > 1))
+fit <- lmer(data = validArtist,  Avg.Speed ~ (1 | ID) + Experiment + THC + BAC + experimentallength + factor(pageNum))
 summary(fit)
 
 
@@ -87,4 +80,3 @@ fit <- lmer(data = validArtist,  SD.Speed ~ (1 | ID) + Experiment +  THC + BAC +
 summary(fit)
 
 head(validArtist)
-
