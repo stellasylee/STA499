@@ -70,40 +70,50 @@ MessageExperiment <- mutate(MessageExperiment, SD.Lane.Diff = MessageExperiment$
 ##artist task
 
 #lane Deviation
-fit <- lmer(data = validArtist, log(SD.Lane.Deviation) ~ (1 | ID) + (Experiment) + THC  + BAC + Avg.Speed + factor(pageNum))
+fit <- lmer(data = validArtist, log(SD.Lane.Deviation) ~ (1 | ID) + Experiment + THC + BAC + Avg.Speed + factor(pageNum))
 summary(fit)
-
+anova(fit)
+AIC(fit)
 #Avg Speed
 fit <- lmer(data = validArtist,  Avg.Speed ~ (1 | ID) + Experiment + THC + BAC + experimentallength + factor(pageNum))
+summary(fit)
 
 #SD Speed
-fit <- lmer(data = validArtist,  SD.Speed ~ (1 | ID) + Experiment +  THC + BAC + experimentallength  + (pageNum > 1))
+fit <- lmer(data = validArtist,  SD.Speed ~ (1 | ID) + Experiment +  THC + BAC + experimentallength  + factor(pageNum))
+summary(fit)
 
 ##message task
 #lane Deviation
-mesfit <- lmer(data = analysisMes, SD.Lane.Deviation ~ (1 | ID) + Experiment + Experiment:BAC + THC + BAC + Avg.Speed + factor(LogStreams.5)) 
+mesfit <- lmer(data = analysisMes, SD.Lane.Deviation ~ (1 | ID) + Experiment + eventNum + Experiment:BAC + THC + BAC + Avg.Speed + factor(LogStreams.5)) 
 summary(mesfit)
+anova(mesfit)
 
 #Average speed
-mesfit <- lmer(data = analysisMes, Avg.Speed ~ (1 | ID) + Experiment + Experiment:BAC + THC + BAC +  factor(LogStreams.5))
+mesfit <- lmer(data = analysisMes, Avg.Speed ~ (1 | ID) + Experiment + THC + BAC +  factor(LogStreams.5))
+summary(mesfit)
+AIC(mesfit)
 
 #SD Speed
-mesfit <- lmer(data = analysisMes,  Sd.Speed ~ (1 | ID) + Experiment + THC + BAC + factor(LogStreams.5))
-
+mesfit <- lmer(data = analysisMes,  Sd.Speed ~ (1 | ID) + Experiment + THC + BAC + factor(LogStreams.5) + eventNum)
+summary(mesfit)
+AIC(mesfit)
 #paired Difference models
 #artist task
 
 #message task
-mesfit <- lmer(data = MessageExperiment, SD.Lane.Diff ~ (1 | ID) + ns(THC, 3) + BAC + Avg.Speed  + factor(LogStreams.5))
+mesfit <- lmer(data = MessageExperiment, SD.Lane.Diff ~ (1 | ID) + THC  + BAC + eventNum + Avg.Speed  + factor(LogStreams.5))
 summary(mesfit)
+AIC(mesfit)
 
 #Average Speed
-mesfit <- lmer(data = MessageExperiment, Avg.Speed.Diff ~ (1 | ID) + THC + BAC + factor(LogStreams.5))
+mesfit <- lmer(data = MessageExperiment, Avg.Speed.Diff ~ (1 | ID) + THC + BAC + eventNum + factor(LogStreams.5))
 summary(mesfit)
+AIC(mesfit)
 
 #SD Speed
-mesfit <- lmer(data = MessageExperiment, SD.Speed.Diff ~ (1 | ID) + THC + BAC + factor(LogStreams.5)) 
+mesfit <- lmer(data = MessageExperiment, SD.Speed.Diff ~ (1 | ID) + THC + BAC  + eventNum + factor(LogStreams.5)) 
 summary(mesfit)
+AIC(mesfit)
 
 #artist task paired models
 #refiltering valid artist to use Artist Experiment instead of Analysis Artist
@@ -113,11 +123,13 @@ validArtist <- filter(ArtistExperiment, ArtistExperiment$valid > 0)
 #lane deviation
 fit <- lmer(data = validArtist, SD.Lane.Diff ~ (1 | ID) + THC + BAC + Avg.Speed + factor(pageNum))
 summary(fit)
+AIC(fit)
 
 #average speed
 fit <- lmer(data = validArtist, Avg.Speed.Diff ~ (1 | ID) + THC + BAC + factor(pageNum) + experimentallength)
 summary(fit)
-
+AIC(fit)
 #SD Speed
-fit <- lmer(data = validArtist, SD.Speed.Diff ~ (1 | ID) + THC + BAC + Avg.Speed + factor(pageNum) + experimentallength)
+fit <- lm(data = validArtist, SD.Speed.Diff ~ THC + BAC + Avg.Speed + factor(pageNum) + experimentallength)
 summary(fit)
+AIC(fit)
