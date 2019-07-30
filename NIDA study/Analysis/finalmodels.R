@@ -14,8 +14,72 @@ library(plotly)
 library(lqmm)
 
 #final Mpdels
-#Artist Task
+# Mirror Task ====
+mirror <- read.csv ("H:\\NIDA\\analysisMirror.csv") # this already changed 299 frames to valid = 0 
+mirror <- dplyr::filter (mirror, total <= 300)
+normalMirror <- filter(mirror, ID != 123) # XP 100% incomplete, Visit 1
 
+# Completion
+fit <- glmer((valid == 0) ~ BAC + THC  + (1 | ID) + (Visit == 1), data = normalMirror, family = "binomial")
+summary(fit)
+
+complete <- filter(mirror, valid == 1) 
+
+# Time
+fit <- lmer (total ~ BAC + THC+ BAC:THC + (1 | ID) + (Visit == 1) + factor(LogStreams.5), data = complete)
+summary(fit)
+anova(fit)
+AIC (fit) # 29557.35
+## Correlation matrix not shown by default, as p = 13 > 12.
+## Use print(x, correlation=TRUE)  or
+## vcov(x)        if you need it
+
+# General Driving Perf ----
+fit <- lmer(SD.Lane.Deviation ~ factor(Experiment) +  BAC + THC  + Avg.Speed  +  (1| ID) + factor (Visit) + factor(LogStreams.5), data = complete)
+fit <- lmer(Avg.Speed ~ factor(Experiment)  + BAC  + THC + BAC:THC +  (1| ID) + factor (Visit) + factor(LogStreams.5), data = complete)
+fit <- lmer(SD.Speed ~ factor(Experiment) +  BAC + THC+ (1| ID) + (Visit == 1) + factor(LogStreams.5), data = complete)
+# Baseline ----
+cntlMirror <- filter(complete, Experiment == 0)
+
+fit <- lmer(SD.Lane.Deviation ~ BAC + THC + Avg.Speed  +  (1| ID) + (Visit == 1) + factor(LogStreams.5),
+            data = cntlMirror)
+summary(fit)
+AIC(fit) # 998.6346
+
+fit <- lmer(Avg.Speed ~ BAC  + THC + BAC:THC +  (1| ID) + (Visit == 1) + factor(LogStreams.5),
+            data = cntlMirror)
+summary(fit)
+AIC(fit) # 9942.324
+
+fit <- lmer(SD.Speed ~ BAC + THC + (1| ID) + (Visit == 1) + factor(LogStreams.5),
+            data = cntlMirror)
+
+AIC(fit) # 761.1331
+# Paired ----
+completePairMirror <- complete[complete$Experiment == 1, c(1:4, 6, 9, 13:16)]
+for (i in 1:(nrow(complete)/2)){
+  lane <- complete$SD.Lane.Deviation[(2*i-1)] - complete$SD.Lane.Deviation[(2*i)]
+  speed <- complete$Avg.Speed[(2*i-1)] - complete$Avg.Speed[(2*i)]
+  sdspeed <- complete$SD.Speed[(2*i-1)] - complete$SD.Speed[(2*i)]
+  completePairMirror[i,"diffSDLane"] <- lane
+  completePairMirror[i,"diffAvgSpeed"] <- speed
+  completePairMirror[i,"diffSDSpeed"] <- sdspeed
+}
+
+fit <- lmer(diffSDLane ~ BAC + THC + diffAvgSpeed  +  (1| ID) + factor (Visit) + factor(LogStreams.5), data = completePairMirror)
+summary(fit)
+anova(fit)
+AIC (fit)
+
+fit <- lmer(diffAvgSpeed ~ BAC + THC + (1| ID) + factor (Visit) + factor(LogStreams.5), data = completePairMirror)
+summary(fit)
+anova(fit)
+
+fit <- lmer(diffSDSpeed ~ BAC + THC +  (1| ID) + factor (Visit) + factor(LogStreams.5), data = completePairMirror)
+summary(fit)
+anova(fit)
+
+#Artist Task ====
 #loading required data
 #reading in files
 AnalysisArtist <- read.csv("H:\\CannabisStudy\\artist\\artistTaskAnalysis.csv")
