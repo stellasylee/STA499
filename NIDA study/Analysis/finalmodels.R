@@ -69,6 +69,19 @@ MessageExperiment <- mutate(MessageExperiment, SD.Lane.Diff = MessageExperiment$
 ##########General performance Models
 ##artist task
 
+#Performance on task measures
+
+fit1 <- glm(data = AnalysisArtist, incorrect ~ THC + BAC, family = "binomial")
+summary(fit1)
+AIC(mesfit)
+exp(coef(fit1))
+
+
+fit2 <- glm(data = AnalysisArtist, valid ~ THC + BAC, family = "binomial")
+summary(fit2)
+AIC(fit2)
+exp(coef(fit2))
+
 #lane Deviation
 fit <- lmer(data = validArtist, log(SD.Lane.Deviation) ~ (1 | ID) + Experiment + THC + BAC + Avg.Speed + factor(pageNum))
 summary(fit)
@@ -77,7 +90,7 @@ AIC(fit)
 #Avg Speed
 fit <- lmer(data = validArtist,  Avg.Speed ~ (1 | ID) + Experiment + THC + BAC + experimentallength + factor(pageNum))
 summary(fit)
-
+AIC(mesfit)
 #SD Speed
 fit <- lmer(data = validArtist,  SD.Speed ~ (1 | ID) + Experiment +  THC + BAC + experimentallength  + factor(pageNum))
 summary(fit)
