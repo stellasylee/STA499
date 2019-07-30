@@ -70,7 +70,6 @@ MessageExperiment <- mutate(MessageExperiment, SD.Lane.Diff = MessageExperiment$
 ##artist task
 
 #Performance on task measures
-
 fit1 <- glm(data = AnalysisArtist, incorrect ~ THC + BAC, family = "binomial")
 summary(fit1)
 AIC(mesfit)
@@ -82,6 +81,7 @@ summary(fit2)
 AIC(fit2)
 exp(coef(fit2))
 
+#general models
 #lane Deviation
 fit <- lmer(data = validArtist, log(SD.Lane.Deviation) ~ (1 | ID) + Experiment + THC + BAC + Avg.Speed + factor(pageNum))
 summary(fit)
