@@ -63,7 +63,7 @@ AIC(fit) # 998.6346 -> 991.24 without (Visit == 1) -> 988.2864 using natural spl
 
 fit <- lmer(Avg.Speed ~ BAC  + THC  + (1| ID) + (Visit == 1) + factor(LogStreams.5), data = cntlMirror, REML = FALSE)
 summary(fit)
-AIC(fit) # I Found that interaction does not improve AIC for this comparison
+AIC(fit) # I Found that the interaction does not improve AIC for this comparison
 
 fit <- lmer(SD.Speed ~ BAC + THC  + (1| ID) + (Visit == 1) + factor(LogStreams.5), data = cntlMirror, REML = FALSE)
 summary(fit)
@@ -194,7 +194,7 @@ AIC(fit)
 summary(fit)
 
 
-### Conclusions = No differences in baseline driving
+### Conclusions = No differences in baseline driving, slight trend towards worse lane keeping with higher BAC
 
 
 #### Paired models
@@ -251,7 +251,6 @@ mesfit <- lmer(data = MessageControl, SD.Lane.Deviation ~ (1 | ID) + THC + BAC +
                  ns(Avg.Speed,3) + factor(LogStreams.5), REML = FALSE) 
 AIC(mesfit)
 summary(mesfit)
-anova(mesfit)
 
 #Average speed
 mesfit <- lmer(data = MessageControl, Avg.Speed ~ (1 | ID) + THC + BAC +  factor(LogStreams.5))
@@ -283,4 +282,6 @@ mesfit <- lmer(data = MessageExperiment, SD.Speed.Diff ~ (1 | ID) + THC + BAC   
 summary(mesfit)
 AIC(mesfit)
 
-## Conclusions = BAC worsens lane keeping during task, higher THC slows down by less and might have more speed variation
+## Conclusions = BAC worsens lane keeping during task, 
+##               higher THC slows down by less (even after adjusting for initital speed, which tends to be slower) 
+##               THC might lead to more speed variation (p < .2)
