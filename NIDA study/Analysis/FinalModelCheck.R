@@ -6,17 +6,15 @@
 # install.packages("lqmm")
 
 library(stringr) # String manipulation
-library(readxl) 
 library(dplyr)
 library(lme4)
 library(lmerTest)
 library(plotly)
-library(lqmm)
+library(splines)
 
 #final Mpdels
 # Mirror Task ====
 mirror <- read.csv ("H:\\NIDA\\analysisMirror.csv") # this already changed 299 frames to valid = 0 
-
 
 boxplot(data = mirror, total ~ valid)  ## There is one very bad value, but it looks like you're removing it
 mirror %>% group_by(valid) %>% summarize(max_val = max(total)) 
@@ -42,10 +40,7 @@ fit <- lmer (total ~ BAC + THC + BAC:THC + (1 | ID) + (Visit == 1) + factor(LogS
 summary(fit)
 AIC (fit) # 29557.35  -> 14842.4 (Interaction increases AIC, not necessary)
 
-
 ### Conclusions = Neither BAC or THC associated with succesful completion or completion speed
-
-
 
 # # General Driving Perf ---- Not using for now
 # fit <- lmer(SD.Lane.Deviation ~ factor(Experiment) +  BAC + THC  + Avg.Speed  +  (1| ID) + factor (Visit) + factor(LogStreams.5), data = complete)
@@ -56,7 +51,6 @@ AIC (fit) # 29557.35  -> 14842.4 (Interaction increases AIC, not necessary)
 # Baseline Driving perf
 cntlMirror <- filter(normalMirror, Experiment == 0, valid == 1)
 
-library(splines)
 fit <- lmer(SD.Lane.Deviation ~ BAC + THC + ns(Avg.Speed,3)  +  (1| ID)  + factor(LogStreams.5),data = cntlMirror, REML = FALSE)
 summary(fit)
 AIC(fit) # 998.6346 -> 991.24 without (Visit == 1) -> 988.2864 using natural spline for Avg.Speed
@@ -89,8 +83,6 @@ for (i in 1:(nrow(complete)/2)){
 d1 <- filter(complete, Experiment == 1)
 d2 <- filter(complete, Experiment == 0)
 
-head(d1)
-head(d2)
 pairedMirror <- data.frame(d2, diffSDLane = d1$SD.Lane.Deviation - d2$SD.Lane.Deviation,
                            diffAvgSpeed = d1$Avg.Speed - d2$Avg.Speed,
                            diffSDSpeed = d1$SD.Speed - d2$SD.Speed)
@@ -116,15 +108,10 @@ AIC(fit)
 #Artist Task ====
 #loading required data
 #reading in files
-AnalysisArtist <- read.csv("H:\\NIDA\\analysisArtistNoEngage.csv")
+AnalysisArtist <- read.csv("H:\\NIDA\\finalArtist.csv")
 ArtistTimes <- read.csv("H:\\NIDA\\artistTimes.csv")
-
-
-#filtering out and creating separate dataframes for experimental and control groups
-
-ArtistExperiment <- filter(AnalysisArtist, Experiment == "1" )
-ArtistControl <- filter(AnalysisArtist, Experiment == "0")
-
+ArtistExperiment <- filter(AnalysisArtist, Experiment == 1)
+ArtistControl <- filter(AnalysisArtist, Experiment == 0)
 #sorting these dataframes to ensure that the the rows in both of them align
 
 ArtistExperiment <- arrange(ArtistExperiment, desc(DaqName, eventNum))
@@ -137,32 +124,25 @@ ArtistExperiment <- mutate(ArtistExperiment, SD.Lane.Diff = ArtistExperiment$SD.
 #filtering to keep only valid artist from ArtistExperiment
 validArtist <- filter(AnalysisArtist, AnalysisArtist$valid > 0)
 
-#filtering to keep only engaged data
-keepingengagement <- dplyr::filter(ArtistExperiment, !((valid == 0) & (incorrect == 0)))
-
-
-##########General performance Models
-##artist task
-
 
 ####################################################################
 ############# NEED TO REMOVE CONTROL SEGS TO AVOID DOUBLE COUNTING!!
 ####################################################################
-
-ArtistComp <- filter(AnalysisArtist, Experiment == 1)
-
 #Performance on task measures
-fit1 <- glm(data = ArtistComp, incorrect ~ THC + BAC, family = "binomial")
+fit1 <- glm(data = ArtistExperiment, incorrect ~ THC + BAC, family = "binomial")
 summary(fit1)
-AIC(fit1)
+AIC(fit1) # 342.2354
 exp(coef(fit1))
 
-
-fit2 <- glmer(data = AnalysisArtist, valid ~ THC + BAC + (1|ID) + (pageNum == 1), family = "binomial")
+fit2 <- glmer(data = ArtistExperiment, valid ~ THC + BAC + (1|ID) + (pageNum == 1), family = "binomial")
 #### ^ Changed to mixed effects model, here subj specific intercept matters
 summary(fit2)
-AIC(fit2)
+AIC(fit2) #  386.4043
 exp(coef(fit2))
+coefs <- summary(fit2)$coefficients[,1]
+ses <- summary(fit2)$coefficients[,2]
+library(knitr)
+kable(round(exp(data.frame(OR = coefs, LCL = coefs - 1.96*ses, UCL = coefs + 1.96*ses)), 4))
 
 # #general models -- Not using for now
 # #lane Deviation
@@ -178,51 +158,47 @@ exp(coef(fit2))
 # fit <- lmer(data = validArtist,  SD.Speed ~ (1 | ID) + Experiment +  THC + BAC + experimentallength  + factor(pageNum))
 # summary(fit)
 
-### Baseline models
-ArtistControl <- filter(AnalysisArtist, Experiment == 0)
-
+# Baseline models ----
 fit <- lmer(data = ArtistControl, SD.Lane.Deviation ~ (1 | ID)  + THC + BAC + ns(Avg.Speed,3), REML = FALSE)
-AIC(fit)
+AIC(fit) # 711.1087
 summary(fit)
 
-fit <- lmer(data = ArtistControl, Avg.Speed ~ (1 | ID)  + THC + BAC, REML = FALSE)
-AIC(fit)
+fit <- lmer(data = ArtistControl, Avg.Speed ~ (1 | ID)  + THC + BAC , REML = FALSE)
+AIC(fit) # 2330.651
 summary(fit)
 
 fit <- lmer(data = ArtistControl, SD.Speed ~ (1 | ID)  + THC + BAC, REML = FALSE)
-AIC(fit)
+AIC(fit) # 774.1663
 summary(fit)
 
 
-### Conclusions = No differences in baseline driving, slight trend towards worse lane keeping with higher BAC
+### Conclusions = slight trend towards worse lane keeping with higher BAC
+### Slower Speed both for BAC and THC
 
 
 #### Paired models
 validArtist <- filter(ArtistExperiment, valid > 0)
 
 #lane deviation
-fit <- lmer(data = validArtist, SD.Lane.Diff ~ (1 | ID) + THC + BAC + Avg.Speed + (pageNum == 1), REML = FALSE)
+fit <- lm(data = validArtist, SD.Lane.Diff ~ THC + BAC + Avg.Speed + (pageNum == 1))
 summary(fit)
-AIC(fit)
+AIC(fit) # 495.9581
 
 #average speed
-#fit <- lmer(data = validArtist, Avg.Speed.Diff ~ (1 | ID) + THC + BAC + (pageNum == 1))
-summary(fit)  ## ^ Model doesn't need random effect
-AIC(fit)
-
 fit <- lm(data = validArtist,  Avg.Speed.Diff ~ + THC + BAC + (pageNum == 1) + Avg.Speed)
 summary(fit)
+AIC(fit) # 1023.831
 
 #SD Speed
 fit <- lm(data = validArtist, SD.Speed.Diff ~ THC + BAC + Avg.Speed + (pageNum == 1))
 summary(fit)
-AIC(fit)
+AIC(fit) # 401.6657
 
 ### Conclusions no detectable change in driving performance while engaged in task
 
 
 
-##message task
+# Message Reading Task ====
 
 #reading in message task files
 #eventTimesMessage <- read.csv("H:\\CannabisStudy\\message\\eventTimesMessage.csv")
@@ -262,11 +238,9 @@ mesfit <- lmer(data = analysisMes,  Sd.Speed ~ (1 | ID) + THC + BAC + factor(Log
 summary(mesfit)
 AIC(mesfit)
 
-
 ## Conclusions = No effect on lane keeping, higher THC = slower speeds, no effect on speed variation
 
 ## Paired Difference models
-
 #message task
 mesfit <- lmer(data = MessageExperiment, SD.Lane.Diff ~ (1 | ID) + THC  + BAC + Avg.Speed  + factor(LogStreams.5), REML = FALSE)
 summary(mesfit)
