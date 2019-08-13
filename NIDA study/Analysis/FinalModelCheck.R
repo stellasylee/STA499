@@ -36,7 +36,7 @@ summary(fit)
 complete <- filter(normalMirrorExp, valid == 1) 
 
 # Time
-fit <- lmer (total ~ BAC + THC + BAC:THC + (1 | ID) + (Visit == 1) + factor(LogStreams.5), data = complete, REML = FALSE)
+fit <- lmer (total ~ BAC + THC + (1 | ID) + (Visit == 1) + factor(LogStreams.5), data = complete, REML = FALSE)
 summary(fit)
 AIC (fit) # 29557.35  -> 14842.4 (Interaction increases AIC, not necessary)
 
@@ -259,3 +259,54 @@ AIC(mesfit)
 ## Conclusions = BAC worsens lane keeping during task, 
 ##               higher THC slows down by less (even after adjusting for initital speed, which tends to be slower) 
 ##               THC might lead to more speed variation (p < .2)
+
+################################################
+####### LANE DEPT ANALYSIS
+################################################
+
+mirror <- read.csv ("H:\\NIDA\\analysisMirror.csv") # this already changed 299 frames to valid = 0 
+sum(table(mirror$ID, mirror$DosingLevel) < 28)/sum(table(mirror$ID, mirror$DosingLevel) != -1)
+
+
+analysisArtist <- read.csv("H:\\NIDA\\finalArtist.csv")
+sum(table(analysisArtist$ID, analysisArtist$DosingLevel) < 6)/sum(table(analysisArtist$ID, analysisArtist$DosingLevel) != -1)
+
+analysisMes <- read.csv("H:\\NIDA\\analysisMesBrake.csv")
+table(analysisMes$ID, analysisMes$DosingLevel) < 12
+sum(table(analysisMes$ID, analysisMes$DosingLevel) < 12)/sum(table(analysisMes$ID, analysisMes$DosingLevel) != -1)
+
+
+m2 <- filter(mirror, Experiment == 1)
+m3 <- select(m2, ID, DosingLevel, THC, BAC)
+m3$dep <- 0
+
+### Only dept during mirror was subject 129 during ZM on rural segment
+m3$dep[which(m3$ID == 129 & m3$DosingLevel == "ZM")][14] <- 1
+
+
+a2 <- filter(analysisArtist, Experiment == 1)
+a3 <- select(a2, ID, DosingLevel, THC, BAC)
+a3$dep <- 0
+
+### All depts occured during interstate, so events are interchangeable
+a3$dep[which(a3$ID == 15 & a3$DosingLevel == "YM")][1] <- 1
+a3$dep[which(a3$ID == 21 & a3$DosingLevel == "ZP")][1] <- 1
+a3$dep[which(a3$ID == 34 & a3$DosingLevel == "XP")][1] <- 1
+a3$dep[which(a3$ID == 35 & a3$DosingLevel == "YP")][1] <- 1
+a3$dep[which(a3$ID == 129 & a3$DosingLevel == "ZM")][1] <- 1
+a3$dep[which(a3$ID == 129 & a3$DosingLevel == "ZM")][2] <- 1
+
+r2 <- filter(analysisMes, Experiment == 1)
+r3 <- select(r2, ID, DosingLevel, THC, BAC)
+r3$dep <- 0
+
+r3$dep[which(r3$ID == 21 & r3$DosingLevel == "ZM")][6] <- 1 ## rural seg for ID 21
+r3$dep[which(r3$ID == 25 & r3$DosingLevel == "YP")][3] <- 1  ## Interstate for ID 25
+r3$dep[which(r3$ID == 31 & r3$DosingLevel == "ZM")][3] <- 1 ## Interstate for ID 31
+r3$dep[which(r3$ID == 129 & r3$DosingLevel == "ZM")][6] <- 1  ## rural for ID 129
+
+lane_dep <- rbind(data.frame(m3, task = "mirror"), data.frame(a3, task = "artist"), data.frame(r3, task = "msg"))
+
+fit <- glmer((valid == 1) ~ BAC + THC  + (1 | ID) + (Visit == 1), data = normalMirrorExp, family = "binomial")
+fit <- glmer((dep == 1) ~ BAC + THC + (1 + THC|ID) + factor(task), data = lane_dep, family = "binomial")
+summary(fit)
