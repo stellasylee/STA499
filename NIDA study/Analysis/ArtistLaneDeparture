@@ -1,0 +1,33 @@
+#Artist Task ====
+#loading required data
+#reading in files
+ArtistFinal4 <- read.csv("H:\\finalFinalArtistLD.csv")
+AnalysisArtist <- read.csv("H:\\NIDA\\finalArtist.csv")
+ArtistTimes <- read.csv("H:\\NIDA\\artistTimes.csv")
+ArtistExperiment <- filter(ArtistFinal4, Experiment == 1)
+ArtistControl <- filter(ArtistFinal4, Experiment == 0)
+#sorting these dataframes to ensure that the the rows in both of them align
+
+ArtistExperiment <- arrange(ArtistExperiment, desc(DaqName, eventNum))
+ArtistControl <- arrange(ArtistControl, desc(DaqName, eventNum))
+
+ArtistExperiment <- mutate(ArtistExperiment, SD.Lane.Diff = ArtistExperiment$SD.Lane.Deviation - ArtistControl$SD.Lane.Deviation,
+                           Avg.Speed.Diff = ArtistExperiment$Avg.Speed - ArtistControl$Avg.Speed, 
+                           SD.Speed.Diff = ArtistExperiment$SD.Speed - ArtistControl$SD.Speed)
+
+#filtering to keep only valid artist from ArtistExperiment
+validArtist <- filter(ArtistFinal4, ArtistFinal4$valid > 0)
+
+
+
+
+#Lane departure
+#checking for minor
+fit <- lm(data = ArtistFinal4, Lane.Departure.Minor ~ (1 | ID)  + THC + BAC + Avg.Speed + (pageNum == 1) )
+summary(fit)
+#checking for major
+fit <- lmer(data = ArtistFinal4, Lane.Departure.Major ~ (1 | ID)  + THC + BAC + Avg.Speed + (pageNum == 1) )
+summary(fit)
+#checking for severe
+fit <- lmer(data = ArtistFinal4, Lane.Departure.Severe ~ (1 | ID)  + THC + BAC + Avg.Speed + (pageNum == 1) )
+summary(fit)
