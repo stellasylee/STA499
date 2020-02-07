@@ -109,7 +109,7 @@ AIC(res) ## AIC 577.3 w/o int, 570.8 w/ int
 
 ## Severe
 #res <- glmer(sev_dept ~ THC  + BAC + scale(Avg.Speed) + SD.Speed + abs_pos + (1 | ID) , data = sm2, family = "binomial", control = glmerControl(optimizer = "bobyqa"))
-res <- glm(sev_dept ~ THC  + BAC + THC:BAC + scale(Avg.Speed) , data = sm2, family = "binomial")
+res <- glm(sev_dept ~ THC  + BAC + scale(Avg.Speed) , data = sm2, family = "binomial")
 summary(res)
 AIC(res)  ## AIC 22 w/o int, 24 w/ int
 
@@ -120,14 +120,14 @@ AIC(res)  ## AIC 22 w/o int, 24 w/ int
 
 ### Any
 sm3 <- dplyr::filter(sm2, Lane.Departure.Minor > 0)
-m <- lmer(Lane.Departure.Minor ~ THC+ BAC + scale(Avg.Speed) + abs_pos  + SD.Speed +  (1 |ID), data = sm3, REML = FALSE, control = lmerControl(
+m <- lmer(Lane.Departure.Minor ~ THC+ BAC + scale(Avg.Speed) + abs_pos +  (1 |ID), data = sm3, REML = FALSE, control = lmerControl(
             optimizer ='optimx', optCtrl=list(method='L-BFGS-B')))
 #m <- lm(Lane.Departure.Minor ~ THC+ BAC + scale(Avg.Speed) + abs_pos, data = sm3)
 summary(m)
 
 ### Major
 sm3 <- dplyr::filter(sm2, Lane.Departure.Major > 0)
-m <- lmer(Lane.Departure.Major ~ THC+ BAC + scale(Avg.Speed) + abs_pos  + SD.Speed + (1 |ID), data = sm3, REML = FALSE, control = lmerControl(
+m <- lmer(Lane.Departure.Major ~ THC+ BAC + scale(Avg.Speed) + abs_pos + (1 |ID), data = sm3, REML = FALSE, control = lmerControl(
             optimizer ='optimx', optCtrl=list(method='L-BFGS-B')))
 #m <- lm(Lane.Departure.Major ~ THC+ BAC + scale(Avg.Speed) + abs_pos, data = ld2)
 summary(m)
@@ -136,8 +136,8 @@ summary(m)
 sm3 <- dplyr::filter(sm2, Lane.Departure.Severe > 0)
 #m <- lmer(Lane.Departure.Severe ~ THC+ BAC + scale(Avg.Speed) + abs_pos + SD.Speed + (1 |ID), data = sm3, REML = FALSE, 
 #          control = lmerControl(optimizer ='optimx', optCtrl=list(method='L-BFGS-B')))
-m <- lm(Lane.Departure.Severe ~ THC+ BAC + scale(Avg.Speed) + abs_pos + SD.Speed, data = sm3)
-summary(m)
+m <- lm(Lane.Departure.Severe ~ THC+ BAC + scale(Avg.Speed) , data = sm3)
+#summary(m)
 
 
 #####################################################
@@ -219,3 +219,5 @@ ld3$DosingLevel
 mr3$ID
 sm3$ID
 ld3$ID
+
+nrow(ld) + nrow(sm) +nrow(mr)
