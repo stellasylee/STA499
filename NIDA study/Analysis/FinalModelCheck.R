@@ -14,7 +14,7 @@ library(splines)
 
 #final Mpdels
 # Mirror Task ====
-mirror <- read.csv ("H:\\NIDA\\analysisMirror.csv") # this already changed 299 frames to valid = 0 
+mirror <- read.csv ("H:\\NIDA\\final\\analysisMirror.csv") # this already changed 299 frames to valid = 0 
 
 boxplot(data = mirror, total ~ valid)  ## There is one very bad value, but it looks like you're removing it
 mirror %>% group_by(valid) %>% summarize(max_val = max(total)) 
@@ -87,20 +87,32 @@ pairedMirror <- data.frame(d2, diffSDLane = d1$SD.Lane.Deviation - d2$SD.Lane.De
                            diffAvgSpeed = d1$Avg.Speed - d2$Avg.Speed,
                            diffSDSpeed = d1$SD.Speed - d2$SD.Speed)
 
+### Unit conversions
+pairedMirror$BAC <- pairedMirror$BAC*100
+pairedMirror$diffSDLane <- pairedMirror$diffSDLane*30.48
+pairedMirror$diffAvgSpeed <- pairedMirror$diffAvgSpeed*0.44704
+pairedMirror$diffSDSpeed <- pairedMirror$diffSDSpeed*0.44704
+
 
 fit <- lmer(diffSDLane ~ BAC + THC  + diffAvgSpeed  +  (1| ID)  + (Visit == 1) +  factor(LogStreams.5), data = pairedMirror, REML = FALSE)
 AIC(fit)
 summary(fit)
+confint(fit, method = "Wald")
 
-fit <- lmer(diffAvgSpeed ~ BAC + THC +  (1| ID)  +  (Visit == 1) +  factor(LogStreams.5), data = pairedMirror, REML = FALSE)
-summary(fit) ## ^ Degenerate random effect, use lm()
+#fit <- lmer(diffAvgSpeed ~ BAC + THC +  (1| ID)  +  (Visit == 1) +  factor(LogStreams.5), data = pairedMirror, REML = FALSE)
+#summary(fit) ## ^ Degenerate random effect, use lm()
+
 
 fit <- lm(diffAvgSpeed ~ BAC + THC + (Visit == 1) + Avg.Speed + factor(LogStreams.5), data = pairedMirror)
 summary(fit)
+confint(fit, method = "Wald")
 
-fit <- lmer(diffSDSpeed ~ BAC + THC +  (1| ID) + (Visit == 1), data = completePairMirror, REML = FALSE)
+
+fit <- lmer(diffSDSpeed ~ BAC + THC +  factor(LogStreams.5) + (1| ID) + (Visit == 1), data = completePairMirror, REML = FALSE)
 summary(fit)
 AIC(fit)
+confint(fit, method = "Wald")
+
 
 ### Conclusions = No change in lane keeping, higher THC -> slowed down by more, no change in speed variability
 
@@ -108,8 +120,8 @@ AIC(fit)
 #Artist Task ====
 #loading required data
 #reading in files
-AnalysisArtist <- read.csv("H:\\NIDA\\finalArtist.csv")
-ArtistTimes <- read.csv("H:\\NIDA\\artistTimes.csv")
+AnalysisArtist <- read.csv("H:\\NIDA\\final\\finalArtist.csv")
+ArtistTimes <- read.csv("H:\\NIDA\\final\\artistTimes.csv")
 ArtistExperiment <- filter(AnalysisArtist, Experiment == 1)
 ArtistControl <- filter(AnalysisArtist, Experiment == 0)
 #sorting these dataframes to ensure that the the rows in both of them align
@@ -179,20 +191,32 @@ summary(fit)
 #### Paired models
 validArtist <- filter(ArtistExperiment, valid > 0)
 
+### Unit conversions
+validArtist$BAC <- validArtist$BAC*100
+validArtist$SD.Lane.Diff <- validArtist$SD.Lane.Diff*30.48
+validArtist$Avg.Speed.Diff <- validArtist$Avg.Speed.Diff*0.44704
+validArtist$SD.Speed.Diff <- validArtist$SD.Speed.Diff*0.44704
+
+
 #lane deviation
 fit <- lm(data = validArtist, SD.Lane.Diff ~ THC + BAC + Avg.Speed + (pageNum == 1))
 summary(fit)
 AIC(fit) # 495.9581
+confint(fit, method = "Wald")
+
 
 #average speed
 fit <- lm(data = validArtist,  Avg.Speed.Diff ~ + THC + BAC + (pageNum == 1) + Avg.Speed)
 summary(fit)
 AIC(fit) # 1023.831
+confint(fit, method = "Wald")
+
 
 #SD Speed
 fit <- lm(data = validArtist, SD.Speed.Diff ~ THC + BAC + Avg.Speed + (pageNum == 1))
 summary(fit)
 AIC(fit) # 401.6657
+confint(fit, method = "Wald")
 
 ### Conclusions no detectable change in driving performance while engaged in task
 
@@ -202,7 +226,7 @@ AIC(fit) # 401.6657
 
 #reading in message task files
 #eventTimesMessage <- read.csv("H:\\CannabisStudy\\message\\eventTimesMessage.csv")
-analysisMes <- read.csv("H:\\NIDA\\analysisMesBrake.csv")
+analysisMes <- read.csv("H:\\NIDA\\final\\analysisMesBrake.csv")
 
 #filtering out and creating separate dataframes for experimental and control groups
 
@@ -240,21 +264,32 @@ AIC(mesfit)
 
 ## Conclusions = No effect on lane keeping, higher THC = slower speeds, no effect on speed variation
 
+### Unit conversions
+MessageExperiment$BAC <- MessageExperiment$BAC*100
+MessageExperiment$SD.Lane.Diff <- MessageExperiment$SD.Lane.Diff*30.48
+MessageExperiment$Avg.Speed.Diff <- MessageExperiment$Avg.Speed.Diff*0.44704
+MessageExperiment$SD.Speed.Diff <- MessageExperiment$SD.Speed.Diff*0.44704
+
+
 ## Paired Difference models
 #message task
 mesfit <- lmer(data = MessageExperiment, SD.Lane.Diff ~ (1 | ID) + THC  + BAC + Avg.Speed  + factor(LogStreams.5), REML = FALSE)
 summary(mesfit)
 AIC(mesfit)
+confint(mesfit, method = "Wald")
 
 #Average Speed
 mesfit <- lmer(data = MessageExperiment, Avg.Speed.Diff ~ (1 | ID) + THC + BAC + Avg.Speed + factor(LogStreams.5), REML = FALSE)
 summary(mesfit)
 AIC(mesfit)
+confint(mesfit, method = "Wald")
 
 #SD Speed
 mesfit <- lmer(data = MessageExperiment, SD.Speed.Diff ~ (1 | ID) + THC + BAC   + factor(LogStreams.5), REML = FALSE) 
 summary(mesfit)
 AIC(mesfit)
+confint(mesfit, method = "Wald")
+
 
 ## Conclusions = BAC worsens lane keeping during task, 
 ##               higher THC slows down by less (even after adjusting for initital speed, which tends to be slower) 
